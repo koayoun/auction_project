@@ -1,0 +1,25 @@
+// 가격 옵션 (단위: 만원)
+export const PRICE_OPTIONS = [
+  { value: 1000, label: '1,000만원' },
+  { value: 5000, label: '5,000만원' },
+  { value: 10000, label: '1억원' },
+  { value: 15000, label: '1억 5,000만원' },
+  { value: 20000, label: '2억원' },
+  { value: 25000, label: '2억 5,000만원' },
+  { value: 30000, label: '3억원' },
+  { value: 35000, label: '3억 5,000만원' },
+  { value: 40000, label: '4억원' },
+  { value: 45000, label: '4억 5,000만원' },
+  { value: 50000, label: '5억원' },
+  { value: 55000, label: '5억 5,000만원' },
+  { value: 60000, label: '6억원' },
+  { value: 65000, label: '6억 5,000만원' },
+  { value: 70000, label: '7억원' },
+  { value: 75000, label: '7억 5,000만원' },
+  { value: 80000, label: '8억원' },
+  { value: 85000, label: '8억 5,000만원' },
+  { value: 90000, label: '9억원' },
+  { value: 95000, label: '9억 5,000만원' },
+  { value: 100000, label: '10억원' },
+];
+

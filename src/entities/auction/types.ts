@@ -5,11 +5,17 @@ export interface AuctionItem {
   court: string;                 // 법원
   department?: string;           // 담당계
   address: string;               // 소재지
-  appraisalPrice: number;        // 감정가 (원)
-  minBidPrice: number;           // 최저입찰가 (원)
-  area: number;                  // 면적 (m²)
-  bidStartDate: string;          // 입찰 시작일 (YYYY-MM-DD)
-  bidEndDate: string;            // 입찰 종료일 (YYYY-MM-DD)
+  appraisalPrice: number;        // 감정평가액 (원)
+  minSalePrice: number;          // 최저매각가격 (원)
+  deposit: number;               // 매수신청 보증금 (원)
+  itemNote?: string;             // 물건비고
+  detailedAddress?: string;      // 목록2 소재지
+  dividendDeadline?: string;     // 배당요구종기 (YYYY-MM-DD)
+  claimAmount?: number;          // 청구금액 (원)
+  courtSchedule?: string;        // 기일내역
+  area?: number;                 // 면적 (m²)
+  bidStartDate?: string;         // 입찰 시작일 (YYYY-MM-DD)
+  bidEndDate?: string;           // 입찰 종료일 (YYYY-MM-DD)
   status: AuctionStatus;         // 경매 상태
 }
 

@@ -3,7 +3,7 @@ import type { AuctionItem } from '../../entities/auction';
 import { AuctionCard } from './AuctionCard';
 
 const Container = styled.div`
-  margin-top: 2rem;
+  margin-top: 0;
 `;
 
 const Title = styled.h3`

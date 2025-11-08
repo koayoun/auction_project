@@ -127,17 +127,19 @@ export const AuctionCard = ({ item }: AuctionCardProps) => {
           <InfoValue>{formatPrice(item.appraisalPrice)}</InfoValue>
         </InfoItem>
         <InfoItem>
-          <InfoLabel>최저입찰가</InfoLabel>
-          <InfoValue>{formatPrice(item.minBidPrice)}</InfoValue>
+          <InfoLabel>최저매각가격</InfoLabel>
+          <InfoValue>{formatPrice(item.minSalePrice)}</InfoValue>
         </InfoItem>
         <InfoItem>
-          <InfoLabel>면적</InfoLabel>
-          <InfoValue>{formatArea(item.area)}</InfoValue>
+          <InfoLabel>매수신청 보증금</InfoLabel>
+          <InfoValue>{formatPrice(item.deposit)}</InfoValue>
         </InfoItem>
-        <InfoItem>
-          <InfoLabel>입찰기간</InfoLabel>
-          <InfoValue>{formatDateRange(item.bidStartDate, item.bidEndDate)}</InfoValue>
-        </InfoItem>
+        {item.courtSchedule && (
+          <InfoItem>
+            <InfoLabel>기일내역</InfoLabel>
+            <InfoValue>{item.courtSchedule}</InfoValue>
+          </InfoItem>
+        )}
       </InfoGrid>
     </Card>
   );

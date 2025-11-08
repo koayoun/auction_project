@@ -123,10 +123,40 @@ const Separator = styled.span`
   color: #999999;
 `;
 
+const SearchGroup = styled.div`
+  margin-top: 1.5rem;
+`;
+
+const SearchInput = styled.input`
+  width: 100%;
+  padding: 1rem 1.5rem;
+  border: 1px solid #333333;
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: #2a2a2a;
+  color: #ffffff;
+  margin-bottom: 1rem;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: #1890ff;
+  }
+
+  &:disabled {
+    background-color: #1a1a1a;
+    cursor: not-allowed;
+  }
+
+  &::placeholder {
+    color: #666666;
+  }
+`;
+
 const ButtonGroup = styled.div`
   display: flex;
   gap: 1rem;
-  margin-top: 1.5rem;
+  justify-content: flex-end;
 `;
 
 const ResetButton = styled.button`
@@ -139,6 +169,7 @@ const ResetButton = styled.button`
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  min-width: 120px;
 
   &:hover {
     border-color: #ffffff;
@@ -146,11 +177,37 @@ const ResetButton = styled.button`
   }
 `;
 
+const SearchButton = styled.button`
+  padding: 0.75rem 2rem;
+  background-color: #ffffff;
+  color: #000000;
+  border: 2px solid #ffffff;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 140px;
+
+  &:hover:not(:disabled) {
+    background-color: transparent;
+    color: #ffffff;
+  }
+
+  &:disabled {
+    background-color: #333333;
+    border-color: #333333;
+    color: #666666;
+    cursor: not-allowed;
+  }
+`;
+
 interface AuctionFiltersProps {
   onFiltersChange?: (filters: any) => void;
+  onSearch?: () => void;
 }
 
-export const AuctionFilters = ({ onFiltersChange }: AuctionFiltersProps) => {
+export const AuctionFilters = ({ onFiltersChange, onSearch }: AuctionFiltersProps) => {
   const [showCourtSelect, setShowCourtSelect] = useState(false);
   const [showLocationSelect, setShowLocationSelect] = useState(false);
   const [selectedCourt, setSelectedCourt] = useState('');
@@ -164,6 +221,7 @@ export const AuctionFilters = ({ onFiltersChange }: AuctionFiltersProps) => {
   const [maxPrice, setMaxPrice] = useState('');
   const [minArea, setMinArea] = useState('');
   const [maxArea, setMaxArea] = useState('');
+  const [searchInput, setSearchInput] = useState('');
 
   const handleCourtCheckbox = (checked: boolean) => {
     setShowCourtSelect(checked);
@@ -226,6 +284,13 @@ export const AuctionFilters = ({ onFiltersChange }: AuctionFiltersProps) => {
     setMaxPrice('');
     setMinArea('');
     setMaxArea('');
+    setSearchInput('');
+  };
+
+  const handleSearch = () => {
+    if (onSearch) {
+      onSearch();
+    }
   };
 
   return (
@@ -365,11 +430,35 @@ export const AuctionFilters = ({ onFiltersChange }: AuctionFiltersProps) => {
         </ConditionRange>
       </ConditionGroup>
 
-      {/* 초기화 버튼 */}
+      {/* 검색어 입력 */}
+      <SearchGroup>
+        <ConditionLabel>사건번호 / 주소 검색</ConditionLabel>
+        <SearchInput
+          type="text"
+          placeholder={
+            showCourtSelect 
+              ? "사건 번호를 입력하세요" 
+              : showLocationSelect 
+              ? "주소를 입력하세요"
+              : "먼저 검색 조건을 선택하세요"
+          }
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          disabled={!showCourtSelect && !showLocationSelect}
+        />
+      </SearchGroup>
+
+      {/* 버튼 그룹 */}
       <ButtonGroup>
         <ResetButton onClick={handleReset}>
           조건 초기화
         </ResetButton>
+        <SearchButton 
+          onClick={handleSearch}
+          disabled={!showCourtSelect && !showLocationSelect}
+        >
+          검색
+        </SearchButton>
       </ButtonGroup>
     </FilterSection>
   );

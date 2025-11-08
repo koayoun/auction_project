@@ -16,7 +16,8 @@ const Main = styled.main`
 
 const HeroSection = styled.section`
   background-color: #000000;
-  padding: 4rem 0;
+  padding: 4rem 0 2rem 0;
+  position: relative;
 `;
 
 const Container = styled.div`
@@ -41,69 +42,22 @@ const Subtitle = styled.p`
   opacity: 0.9;
 `;
 
-const SearchBox = styled.div`
-  display: flex;
-  gap: 1rem;
+const SpinnerWrapper = styled.div`
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   margin-top: 2rem;
 `;
 
-const SearchInput = styled.input`
-  flex: 1;
-  padding: 1rem 1.5rem;
-  border: 1px solid #333333;
-  border-radius: 8px;
-  font-size: 14px;
-  background-color: #2a2a2a;
-  color: #ffffff;
-
-  &:focus {
-    outline: none;
-    border-color: #1890ff;
-  }
-
-  &:disabled {
-    background-color: #1a1a1a;
-    cursor: not-allowed;
-  }
-
-  &::placeholder {
-    color: #666666;
-  }
-`;
-
-const SearchButton = styled.button`
-  padding: 1rem 2rem;
-  background-color: #ffffff;
-  color: #000000;
-  border: 2px solid #ffffff;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover:not(:disabled) {
-    background-color: transparent;
-    color: #ffffff;
-  }
-
-  &:disabled {
-    background-color: #333333;
-    border-color: #333333;
-    color: #666666;
-    cursor: not-allowed;
-  }
-`;
-
 const ContentSection = styled.section`
-  padding: 3rem 0;
+  padding: 1.5rem 0 3rem 0;
   background-color: #000000;
+  min-height: 200px;
 `;
 
 function Home() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showResults, setShowResults] = useState(false);
-  const [searchInput, setSearchInput] = useState('');
   
   const dispatch = useAppDispatch();
   const { items } = useAppSelector((state) => state.auctions);
@@ -121,10 +75,13 @@ function Home() {
           court: '서울중앙지방법원',
           address: '서울특별시 강남구 테헤란로 123',
           appraisalPrice: 850000000,
-          minBidPrice: 680000000,
-          area: 84.5,
-          bidStartDate: '2025-11-15',
-          bidEndDate: '2025-11-22',
+          minSalePrice: 680000000,
+          deposit: 68000000,
+          detailedAddress: '서울특별시 강남구 테헤란로 123 (역삼동, 강남빌딩) 101호',
+          dividendDeadline: '2025-11-10',
+          claimAmount: 500000000,
+          courtSchedule: '2025-11-22 10:00 매각기일',
+          itemNote: '현황조사 시 임차인 1명 거주 중',
           status: 'active',
         },
         {
@@ -133,10 +90,12 @@ function Home() {
           court: '서울중앙지방법원',
           address: '서울특별시 서초구 반포대로 234',
           appraisalPrice: 920000000,
-          minBidPrice: 736000000,
-          area: 99.2,
-          bidStartDate: '2025-11-16',
-          bidEndDate: '2025-11-23',
+          minSalePrice: 736000000,
+          deposit: 73600000,
+          detailedAddress: '서울특별시 서초구 반포대로 234 (반포동) 301호',
+          dividendDeadline: '2025-11-11',
+          claimAmount: 600000000,
+          courtSchedule: '2025-11-23 10:00 매각기일',
           status: 'active',
         },
         {
@@ -145,10 +104,13 @@ function Home() {
           court: '서울중앙지방법원',
           address: '서울특별시 송파구 올림픽로 345',
           appraisalPrice: 750000000,
-          minBidPrice: 600000000,
-          area: 76.8,
-          bidStartDate: '2025-11-10',
-          bidEndDate: '2025-11-17',
+          minSalePrice: 600000000,
+          deposit: 60000000,
+          detailedAddress: '서울특별시 송파구 올림픽로 345 (잠실동) 1502호',
+          dividendDeadline: '2025-11-05',
+          claimAmount: 450000000,
+          courtSchedule: '2025-11-17 10:00 매각기일(유찰)',
+          itemNote: '선순위 전세권 설정',
           status: 'completed',
         },
         {
@@ -157,10 +119,12 @@ function Home() {
           court: '서울중앙지방법원',
           address: '서울특별시 강남구 역삼동 456',
           appraisalPrice: 1200000000,
-          minBidPrice: 960000000,
-          area: 115.3,
-          bidStartDate: '2025-11-18',
-          bidEndDate: '2025-11-25',
+          minSalePrice: 960000000,
+          deposit: 96000000,
+          detailedAddress: '서울특별시 강남구 역삼동 456 (역삼빌딩) 전층',
+          dividendDeadline: '2025-11-13',
+          claimAmount: 800000000,
+          courtSchedule: '2025-11-25 10:00 매각기일',
           status: 'active',
         },
       ];
@@ -180,22 +144,14 @@ function Home() {
             <Title>경매 물건 자동 분석 시스템</Title>
             <Subtitle>대법원 경매정보, 실거래가, 위치분석을 한번에!</Subtitle>
             
-            <AuctionFilters />
-            
-            <SearchBox>
-              <SearchInput
-                type="text"
-                placeholder="사건 번호 또는 주소를 입력하세요"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-              />
-              <SearchButton onClick={handleSearch}>
-                검색
-              </SearchButton>
-            </SearchBox>
-
-            {isAnalyzing && <Spinner text="분석중..." />}
+            <AuctionFilters onSearch={handleSearch} />
           </Container>
+          
+          {isAnalyzing && (
+            <SpinnerWrapper>
+              <Spinner text="검색중..." />
+            </SpinnerWrapper>
+          )}
         </HeroSection>
 
         <ContentSection>

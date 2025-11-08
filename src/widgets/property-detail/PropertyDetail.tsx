@@ -121,36 +121,54 @@ export const PropertyDetail = ({ item }: PropertyDetailProps) => {
 
       <InfoGrid>
         <InfoCard>
-          <InfoLabel>법원</InfoLabel>
-          <InfoValue>{item.court}</InfoValue>
-        </InfoCard>
-
-        {item.department && (
-          <InfoCard>
-            <InfoLabel>담당계</InfoLabel>
-            <InfoValue>{item.department}</InfoValue>
-          </InfoCard>
-        )}
-
-        <InfoCard>
           <InfoLabel>감정평가액</InfoLabel>
           <InfoValue>{formatPrice(item.appraisalPrice)}</InfoValue>
         </InfoCard>
 
         <InfoCard>
-          <InfoLabel>최저입찰가</InfoLabel>
-          <InfoValue>{formatPrice(item.minBidPrice)}</InfoValue>
+          <InfoLabel>최저매각가격</InfoLabel>
+          <InfoValue>{formatPrice(item.minSalePrice)}</InfoValue>
         </InfoCard>
 
         <InfoCard>
-          <InfoLabel>면적</InfoLabel>
-          <InfoValue>{formatArea(item.area)}</InfoValue>
+          <InfoLabel>매수신청 보증금</InfoLabel>
+          <InfoValue>{formatPrice(item.deposit)}</InfoValue>
         </InfoCard>
 
-        <InfoCard>
-          <InfoLabel>입찰기간</InfoLabel>
-          <InfoValue>{formatDateRange(item.bidStartDate, item.bidEndDate)}</InfoValue>
-        </InfoCard>
+        {item.detailedAddress && (
+          <InfoCard>
+            <InfoLabel>목록2 소재지</InfoLabel>
+            <InfoValue>{item.detailedAddress}</InfoValue>
+          </InfoCard>
+        )}
+
+        {item.dividendDeadline && (
+          <InfoCard>
+            <InfoLabel>배당요구종기</InfoLabel>
+            <InfoValue>{item.dividendDeadline}</InfoValue>
+          </InfoCard>
+        )}
+
+        {item.claimAmount && (
+          <InfoCard>
+            <InfoLabel>청구금액</InfoLabel>
+            <InfoValue>{formatPrice(item.claimAmount)}</InfoValue>
+          </InfoCard>
+        )}
+
+        {item.courtSchedule && (
+          <InfoCard>
+            <InfoLabel>기일내역</InfoLabel>
+            <InfoValue>{item.courtSchedule}</InfoValue>
+          </InfoCard>
+        )}
+
+        {item.itemNote && (
+          <InfoCard>
+            <InfoLabel>물건비고</InfoLabel>
+            <InfoValue style={{ fontSize: '14px', lineHeight: '1.5' }}>{item.itemNote}</InfoValue>
+          </InfoCard>
+        )}
       </InfoGrid>
     </Container>
   );

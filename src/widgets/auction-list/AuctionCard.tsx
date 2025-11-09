@@ -134,10 +134,10 @@ export const AuctionCard = ({ item }: AuctionCardProps) => {
           <InfoLabel>매수신청 보증금</InfoLabel>
           <InfoValue>{formatPrice(item.deposit)}</InfoValue>
         </InfoItem>
-        {item.courtSchedule && (
+        {item.failedBidCount !== undefined && (
           <InfoItem>
-            <InfoLabel>기일내역</InfoLabel>
-            <InfoValue>{item.courtSchedule}</InfoValue>
+            <InfoLabel>유찰 횟수</InfoLabel>
+            <InfoValue>{item.failedBidCount}회</InfoValue>
           </InfoItem>
         )}
       </InfoGrid>

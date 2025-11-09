@@ -66,26 +66,31 @@ const Address = styled.h3`
 
 const InfoGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0;
+  border-top: 1px solid #333333;
 `;
 
-const InfoCard = styled.div`
-  background: #2a2a2a;
-  padding: 1.5rem;
-  border-radius: 8px;
-  border: 1px solid #333333;
+const InfoRow = styled.div`
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  padding: 1.25rem 1rem;
+  border-bottom: 1px solid #333333;
+  
+  &:nth-child(odd) {
+    border-right: 1px solid #333333;
+  }
 `;
 
 const InfoLabel = styled.div`
   font-size: 14px;
   color: #999999;
-  margin-bottom: 0.5rem;
+  font-weight: 500;
 `;
 
 const InfoValue = styled.div`
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 500;
   color: #ffffff;
 `;
 
@@ -120,55 +125,45 @@ export const PropertyDetail = ({ item }: PropertyDetailProps) => {
       <Address>📍 {item.address}</Address>
 
       <InfoGrid>
-        <InfoCard>
+        <InfoRow>
           <InfoLabel>감정평가액</InfoLabel>
           <InfoValue>{formatPrice(item.appraisalPrice)}</InfoValue>
-        </InfoCard>
+        </InfoRow>
 
-        <InfoCard>
+        <InfoRow>
           <InfoLabel>최저매각가격</InfoLabel>
           <InfoValue>{formatPrice(item.minSalePrice)}</InfoValue>
-        </InfoCard>
+        </InfoRow>
 
-        <InfoCard>
+        <InfoRow>
           <InfoLabel>매수신청 보증금</InfoLabel>
           <InfoValue>{formatPrice(item.deposit)}</InfoValue>
-        </InfoCard>
+        </InfoRow>
 
-        {item.detailedAddress && (
-          <InfoCard>
-            <InfoLabel>목록2 소재지</InfoLabel>
-            <InfoValue>{item.detailedAddress}</InfoValue>
-          </InfoCard>
-        )}
+        <InfoRow>
+          <InfoLabel>청구금액</InfoLabel>
+          <InfoValue>{item.claimAmount ? formatPrice(item.claimAmount) : '없음'}</InfoValue>
+        </InfoRow>
 
-        {item.dividendDeadline && (
-          <InfoCard>
-            <InfoLabel>배당요구종기</InfoLabel>
-            <InfoValue>{item.dividendDeadline}</InfoValue>
-          </InfoCard>
-        )}
+        <InfoRow>
+          <InfoLabel>배당요구종기</InfoLabel>
+          <InfoValue>{item.dividendDeadline || '없음'}</InfoValue>
+        </InfoRow>
 
-        {item.claimAmount && (
-          <InfoCard>
-            <InfoLabel>청구금액</InfoLabel>
-            <InfoValue>{formatPrice(item.claimAmount)}</InfoValue>
-          </InfoCard>
-        )}
+        <InfoRow>
+          <InfoLabel>유찰 횟수</InfoLabel>
+          <InfoValue>{item.failedBidCount !== undefined ? `${item.failedBidCount}회` : '없음'}</InfoValue>
+        </InfoRow>
 
-        {item.courtSchedule && (
-          <InfoCard>
-            <InfoLabel>기일내역</InfoLabel>
-            <InfoValue>{item.courtSchedule}</InfoValue>
-          </InfoCard>
-        )}
+        <InfoRow>
+          <InfoLabel>목록2 소재지</InfoLabel>
+          <InfoValue>{item.detailedAddress || '없음'}</InfoValue>
+        </InfoRow>
 
-        {item.itemNote && (
-          <InfoCard>
-            <InfoLabel>물건비고</InfoLabel>
-            <InfoValue style={{ fontSize: '14px', lineHeight: '1.5' }}>{item.itemNote}</InfoValue>
-          </InfoCard>
-        )}
+        <InfoRow>
+          <InfoLabel>비고</InfoLabel>
+          <InfoValue style={{ fontSize: '14px', lineHeight: '1.5' }}>{item.note || '없음'}</InfoValue>
+        </InfoRow>
       </InfoGrid>
     </Container>
   );

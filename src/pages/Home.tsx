@@ -80,8 +80,8 @@ function Home() {
           detailedAddress: '서울특별시 강남구 테헤란로 123 (역삼동, 강남빌딩) 101호',
           dividendDeadline: '2025-11-10',
           claimAmount: 500000000,
-          courtSchedule: '2025-11-22 10:00 매각기일',
-          itemNote: '현황조사 시 임차인 1명 거주 중',
+          failedBidCount: 0,
+          note: '현황조사 시 임차인 1명 거주 중',
           status: 'active',
         },
         {
@@ -95,7 +95,7 @@ function Home() {
           detailedAddress: '서울특별시 서초구 반포대로 234 (반포동) 301호',
           dividendDeadline: '2025-11-11',
           claimAmount: 600000000,
-          courtSchedule: '2025-11-23 10:00 매각기일',
+          failedBidCount: 0,
           status: 'active',
         },
         {
@@ -109,8 +109,8 @@ function Home() {
           detailedAddress: '서울특별시 송파구 올림픽로 345 (잠실동) 1502호',
           dividendDeadline: '2025-11-05',
           claimAmount: 450000000,
-          courtSchedule: '2025-11-17 10:00 매각기일(유찰)',
-          itemNote: '선순위 전세권 설정',
+          failedBidCount: 1,
+          note: '선순위 전세권 설정',
           status: 'completed',
         },
         {
@@ -124,7 +124,7 @@ function Home() {
           detailedAddress: '서울특별시 강남구 역삼동 456 (역삼빌딩) 전층',
           dividendDeadline: '2025-11-13',
           claimAmount: 800000000,
-          courtSchedule: '2025-11-25 10:00 매각기일',
+          failedBidCount: 0,
           status: 'active',
         },
       ];

@@ -8,11 +8,11 @@ export interface AuctionItem {
   appraisalPrice: number;        // 감정평가액 (원)
   minSalePrice: number;          // 최저매각가격 (원)
   deposit: number;               // 매수신청 보증금 (원)
-  itemNote?: string;             // 물건비고
   detailedAddress?: string;      // 목록2 소재지
   dividendDeadline?: string;     // 배당요구종기 (YYYY-MM-DD)
   claimAmount?: number;          // 청구금액 (원)
-  courtSchedule?: string;        // 기일내역
+  failedBidCount?: number;       // 유찰 횟수
+  note?: string;                 // 비고
   area?: number;                 // 면적 (m²)
   bidStartDate?: string;         // 입찰 시작일 (YYYY-MM-DD)
   bidEndDate?: string;           // 입찰 종료일 (YYYY-MM-DD)

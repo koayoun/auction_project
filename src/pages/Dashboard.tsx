@@ -144,11 +144,11 @@ function Dashboard() {
           {!showAnalysis && !isAnalyzing && (
             <AnalysisSection>
               <AnalysisPlaceholder>
-                <p>🤖 AI를 활용한 상세 분석을 시작하세요</p>
+                <p>AI를 활용한 상세 분석을 시작하세요</p>
                 <p>실거래가, 위치, 투자수익률, 권리분석 등을 자동으로 분석합니다</p>
               </AnalysisPlaceholder>
               <AnalyzeButton onClick={handleAnalyze}>
-                🔍 AI 분석 시작하기
+                AI 분석 시작하기
               </AnalyzeButton>
             </AnalysisSection>
           )}

@@ -203,11 +203,10 @@ const SearchButton = styled.button`
 `;
 
 interface AuctionFiltersProps {
-  onFiltersChange?: (filters: any) => void;
   onSearch?: () => void;
 }
 
-export const AuctionFilters = ({ onFiltersChange, onSearch }: AuctionFiltersProps) => {
+export const AuctionFilters = ({ onSearch }: AuctionFiltersProps) => {
   const [showCourtSelect, setShowCourtSelect] = useState(false);
   const [showLocationSelect, setShowLocationSelect] = useState(false);
   const [selectedCourt, setSelectedCourt] = useState('');

@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 import type { AuctionItem } from '../../entities/auction';
-import { formatPrice, formatArea, formatDateRange } from '../../shared/lib';
+import { formatPrice } from '../../shared/lib';
 
 const Container = styled.div`
   background: #1a1a1a;

@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import type { AuctionItem } from '../../entities/auction';
-import { formatPrice, formatArea, formatDateRange } from '../../shared/lib';
+import { formatPrice } from '../../shared/lib';
 import { useAppDispatch } from '../../app/hooks';
 import { setSelectedItem } from '../../features/auctions';
 

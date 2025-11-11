@@ -51,7 +51,6 @@ temp
 *.njsproj
 *.sln
 *.sw?
-.editorconfig
 
 # OS
 .DS_Store
@@ -88,7 +87,6 @@ README.md
 CHANGELOG.md
 LICENSE
 docs
-*.md
 
 # Docker
 Dockerfile*
@@ -96,9 +94,8 @@ Dockerfile*
 docker-compose*.yml
 .docker
 
-# Misc
-.prettierrc*
-.eslintrc*
-.stylelintrc*
-tsconfig*.json
-vite.config.*
+# ============================================
+# 중요: 빌드 설정 파일들은 제외하지 말 것!
+# tsconfig*.json, vite.config.*, eslint.config.js 등
+# 이 파일들은 빌드에 필요합니다!
+# ============================================

@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: front-app
+  namespace: bdc105
+  labels:
+    app: front-app
+spec:
+  replicas: 1  # 테스트용 1개
+  selector:
+    matchLabels:
+      app: front-app
+  template:
+    metadata:
+      labels:
+        app: front-app
+    spec:
+      # Harbor 인증
+      imagePullSecrets:
+      - name: harbor-secret
+
+      containers:
+      - name: front
+        image: harbor.hplayer95.kro.kr/bdc105-front/front:latest
+        imagePullPolicy: Always
+
+        ports:
+        - name: http
+          containerPort: 3000
+          protocol: TCP
+
+        # 리소스 제한 (테스트용 최소)
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+
+        # 헬스체크
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+

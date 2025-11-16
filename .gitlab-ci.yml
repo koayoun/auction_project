@@ -1,0 +1,127 @@
+# ============================================
+# GitLab CI/CD - CI Only (Build & Push to Harbor)
+# CD는 ArgoCD로 별도 처리
+# ============================================
+
+# 전역 변수 설정
+variables:
+  # BuildKit 활성화 및 설정
+  DOCKER_BUILDKIT: "1"
+  BUILDKIT_PROGRESS: "plain"
+  BUILDKIT_INLINE_CACHE: "1"
+  
+  # Docker 호스트 설정 (DinD 서비스와 통신)
+  DOCKER_HOST: tcp://localhost:2375
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_DRIVER: overlay2
+  
+  # Harbor 이미지 경로 (Variables에서 가져옴)
+  IMAGE_NAME: "${HARBOR_URL}/${HARBOR_PROJECT}/${CI_PROJECT_NAME}"
+
+# 파이프라인 단계
+stages:
+  - build
+
+# ============================================
+# Build 단계 - BuildKit 최적화
+# ============================================
+build-image:
+  stage: build
+  image: docker:24-dind
+  services:
+    - name: docker:24-dind
+      command:
+        - --tls=false
+        - --mtu=1450
+  before_script:
+    - echo "🔐 Harbor에 로그인 중..."
+    - echo "$HARBOR_PASSWORD" | docker login $HARBOR_URL -u $HARBOR_USERNAME --password-stdin
+    - echo "✅ Harbor 로그인 성공"
+    - docker info
+    - docker buildx version || echo "⚠️ buildx not available, using legacy BuildKit"
+    - "docker info | grep BuildKit || echo 'BuildKit: enabled via DOCKER_BUILDKIT=1'"
+    
+  script:
+    - echo "🔨 BuildKit으로 Docker 이미지 빌드 시작..."
+    
+    # 캐시 pull (빌드 속도 향상)
+    - docker pull ${IMAGE_NAME}:latest || true
+    
+    # BuildKit 멀티스테이지 빌드
+    - |
+      docker build \
+        --build-arg BUILDKIT_INLINE_CACHE=1 \
+        --build-arg CI_COMMIT_SHA=${CI_COMMIT_SHA} \
+        --build-arg CI_COMMIT_SHORT_SHA=${CI_COMMIT_SHORT_SHA} \
+        --cache-from ${IMAGE_NAME}:latest \
+        --tag ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA} \
+        --tag ${IMAGE_NAME}:latest \
+        --file Dockerfile \
+        --progress=plain \
+        .
+    
+    - echo "✅ 이미지 빌드 완료"
+    - docker images | grep ${CI_PROJECT_NAME}
+    
+    - echo "📤 Harbor로 이미지 Push 중..."
+    - docker push ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}
+    - docker push ${IMAGE_NAME}:latest
+    - echo "✅ 이미지 Push 완료!"
+    - "echo '📦 최종 이미지: ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}'"
+    
+  after_script:
+    - docker logout $HARBOR_URL || true
+    - docker image prune -f || true
+    
+  tags:
+    - k8s-runner  # 또는 당신의 runner tag
+    
+  only:
+    - master
+    - main
+    
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
+
+# ============================================
+# MR 전용 빌드 (테스트 목적, Push 안함)
+# ============================================
+build-image-mr:
+  stage: build
+  image: docker:24-dind
+  services:
+    - name: docker:24-dind
+      command: ["--tls=false", "--mtu=1450"]
+      
+  before_script:
+    - echo "🔐 Harbor에 로그인 중..."
+    - echo "$HARBOR_PASSWORD" | docker login $HARBOR_URL -u $HARBOR_USERNAME --password-stdin
+    - docker pull ${IMAGE_NAME}:latest || true
+    
+  script:
+    - echo "🔨 MR용 이미지 빌드 (Push 제외)..."
+    - |
+      docker build \
+        --build-arg BUILDKIT_INLINE_CACHE=1 \
+        --cache-from ${IMAGE_NAME}:latest \
+        --tag ${IMAGE_NAME}:mr-${CI_MERGE_REQUEST_IID} \
+        --file Dockerfile \
+        --progress=plain \
+        .
+    - echo "✅ MR 이미지 빌드 완료 (Harbor Push 안 함)"
+    
+  after_script:
+    - docker logout $HARBOR_URL || true
+    
+  tags:
+    - k8s-runner
+    
+  only:
+    - merge_requests
+    
+  except:
+    - master
+    - main

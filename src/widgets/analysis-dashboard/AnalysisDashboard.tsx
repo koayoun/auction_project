@@ -301,21 +301,6 @@ const AIText = styled.p`
   color: #cccccc;
 `;
 
-const ChartContainer = styled.div`
-  background: #0a0a0a;
-  border: 1px solid #333333;
-  border-radius: 12px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-`;
-
-const ChartTitle = styled.h3`
-  font-size: 18px;
-  font-weight: 600;
-  color: #ffffff;
-  margin: 0 0 2rem 0;
-`;
-
 const SectionTitle = styled.h2`
   font-size: 20px;
   font-weight: 700;
@@ -331,113 +316,6 @@ const TwoColumnLayout = styled.div`
 
   @media (max-width: 1024px) {
     grid-template-columns: 1fr;
-  }
-`;
-
-const PriceDetailTable = styled.div`
-  background: #0a0a0a;
-  border: 1px solid #333333;
-  border-radius: 12px;
-  overflow: hidden;
-`;
-
-const PriceDetailRow = styled.div<{ $header?: boolean }>`
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  border-bottom: 1px solid #333333;
-  background: ${props => props.$header ? '#1a1a1a' : 'transparent'};
-
-  &:last-child {
-    border-bottom: none;
-  }
-`;
-
-const PriceDetailCell = styled.div<{ $header?: boolean; $align?: string }>`
-  padding: 1rem 1.5rem;
-  font-size: ${props => props.$header ? '14px' : '15px'};
-  font-weight: ${props => props.$header ? '600' : '500'};
-  color: ${props => props.$header ? '#999999' : '#ffffff'};
-  border-right: 1px solid #333333;
-  text-align: ${props => props.$align || 'left'};
-
-  &:last-child {
-    border-right: none;
-  }
-`;
-
-const BarChart = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-`;
-
-const BarRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-`;
-
-const BarLabel = styled.div`
-  min-width: 100px;
-  font-size: 14px;
-  color: #999999;
-  font-weight: 500;
-`;
-
-const BarTrack = styled.div`
-  flex: 1;
-  height: 40px;
-  background: #1a1a1a;
-  border-radius: 8px;
-  position: relative;
-  overflow: hidden;
-`;
-
-const BarFill = styled.div<{ $width: number; $color: string }>`
-  height: 100%;
-  width: ${props => props.$width}%;
-  background: ${props => props.$color};
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding-right: 1rem;
-  font-size: 14px;
-  font-weight: 600;
-  color: #ffffff;
-  transition: width 0.5s ease;
-`;
-
-const PriceTable = styled.div`
-  background: #0a0a0a;
-  border: 1px solid #333333;
-  border-radius: 12px;
-  overflow: hidden;
-  margin-bottom: 2rem;
-`;
-
-const TableRow = styled.div<{ $header?: boolean; $columns?: string }>`
-  display: grid;
-  grid-template-columns: ${props => props.$columns || '200px 1fr'};
-  border-bottom: 1px solid #333333;
-  
-  &:last-child {
-    border-bottom: none;
-  }
-
-  background: ${props => props.$header ? '#1a1a1a' : 'transparent'};
-`;
-
-const TableCell = styled.div<{ $header?: boolean; $align?: string }>`
-  padding: 1.25rem 1.5rem;
-  font-size: ${props => props.$header ? '14px' : '16px'};
-  font-weight: ${props => props.$header ? '600' : '500'};
-  color: ${props => props.$header ? '#999999' : '#ffffff'};
-  border-right: ${props => props.$header ? 'none' : '1px solid #333333'};
-  text-align: ${props => props.$align || 'left'};
-
-  &:last-child {
-    border-right: none;
   }
 `;
 
@@ -639,17 +517,8 @@ export const AnalysisDashboard = () => {
   const renderPriceAnalysis = () => {
     // 가격 데이터
     const appraisalPrice = 850000000; // 감정가
-    const marketPrice = 950000000; // 주변시세
     const minSalePrice = 680000000; // 최저가
     const priceActualScore = 34; // 가격 매력도 실제 점수 (40점 만점)
-    const locationImportance: '높음' | '보통' | '낮음' = '높음'; // 소재지 중요도
-
-    // 할인율 계산
-    const appraisalDiscountRate = Math.round(((appraisalPrice - minSalePrice) / appraisalPrice) * 100);
-    const marketDiscountRate = Math.round(((marketPrice - minSalePrice) / marketPrice) * 100);
-
-    // 가격 상세정보 점수 계산 (예시)
-    const itemScore = 10; // 항목 배점 득점 (예시)
 
     return (
       <TabContent>
@@ -728,7 +597,6 @@ export const AnalysisDashboard = () => {
 
   const renderRiskAnalysis = () => {
     // 위험 분석 점수
-    const RISK_MAX_SCORE = 60; // 권리 위험도 만점
     const riskActualScore = 49; // 권리 위험도 실제 점수 (60점 만점)
 
     // 위험 분석 데이터

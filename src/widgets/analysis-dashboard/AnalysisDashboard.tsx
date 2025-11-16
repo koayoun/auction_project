@@ -1,5 +1,16 @@
 import { useState } from 'react';
 import styled from 'styled-components';
+import { 
+  getScoreGradeAndComment,
+  formatPriceDetail,
+  calculateAppraisalRatio,
+  calculatePriceDifference,
+  calculateClaimAmountRatio,
+  isPropertyStatusGood,
+  isRightAnalysisGood,
+  type PropertyStatus,
+  type RightAnalysisResult
+} from '../../shared/constants';
 
 const Container = styled.div`
   background: #1a1a1a;
@@ -36,48 +47,64 @@ const TabContent = styled.div`
   padding: 2rem;
 `;
 
+const ScoresRow = styled.div`
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+
+  @media (max-width: 1024px) {
+    flex-direction: column;
+  }
+`;
+
 const TotalScoreCard = styled.div`
   background: #0a0a0a;
-  border: 2px solid #333333;
+  border: 2px solid #1890ff;
   border-radius: 12px;
-  padding: 2.5rem;
-  margin-bottom: 2rem;
+  padding: 2rem;
   text-align: center;
+  flex: 0.5;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.2);
 `;
 
 const TotalScoreLabel = styled.div`
-  font-size: 16px;
+  font-size: 18px;
   color: #999999;
   margin-bottom: 1rem;
   font-weight: 500;
 `;
 
 const TotalScoreValue = styled.div`
-  font-size: 64px;
+  font-size: 80px;
   font-weight: 700;
-  color: #ffffff;
+  color: #1890ff;
   margin-bottom: 0.5rem;
   line-height: 1;
 `;
 
 const TotalScoreSubtext = styled.div`
-  font-size: 18px;
+  font-size: 20px;
   color: #52c41a;
   font-weight: 600;
+  margin-bottom: 0.5rem;
+`;
+
+const TotalScoreComment = styled.div`
+  font-size: 14px;
+  color: #cccccc;
+  font-weight: 400;
+  line-height: 1.5;
+  margin-top: 0.5rem;
 `;
 
 const SummaryGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-direction: row;
   gap: 1.5rem;
-  margin-bottom: 2rem;
+  flex: 1;
 
   @media (max-width: 1024px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 `;
 
@@ -86,6 +113,7 @@ const SummaryCard = styled.div`
   border: 1px solid #333333;
   border-radius: 8px;
   padding: 1.5rem;
+  flex: 1;
 `;
 
 const SummaryTitle = styled.div`
@@ -104,6 +132,37 @@ const SummaryValue = styled.div`
 const SummarySubtext = styled.div`
   font-size: 13px;
   color: #666666;
+`;
+
+const SummaryBoxesRow = styled.div`
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+`;
+
+const SummaryBox = styled.div`
+  background: #0a0a0a;
+  border: 1px solid #333333;
+  border-radius: 8px;
+  padding: 1.5rem;
+  flex: 1;
+`;
+
+const SummaryBoxTitle = styled.h3`
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 1rem 0;
+`;
+
+const SummaryBoxContent = styled.div`
+  color: #cccccc;
+  font-size: 14px;
+  line-height: 1.6;
 `;
 
 const AnalysisCard = styled.div`
@@ -135,6 +194,7 @@ const DataRow = styled.div`
   align-items: center;
   padding: 0.75rem 0;
   border-bottom: 1px solid #333333;
+  gap: 2rem;
 
   &:last-child {
     border-bottom: none;
@@ -144,12 +204,17 @@ const DataRow = styled.div`
 const DataLabel = styled.span`
   font-size: 14px;
   color: #999999;
+  flex: 1;
+  min-width: 200px;
 `;
 
 const DataValue = styled.span`
   font-size: 16px;
   font-weight: 600;
   color: #ffffff;
+  flex-shrink: 0;
+  min-width: 200px;
+  text-align: right;
 `;
 
 const HighlightValue = styled.span<{ $positive?: boolean }>`
@@ -171,6 +236,24 @@ const ScoreBadge = styled.div<{ $score: number }>`
   color: ${props => {
     if (props.$score >= 80) return '#52c41a';
     if (props.$score >= 60) return '#faad14';
+    return '#f5222d';
+  }};
+`;
+
+const EvaluationChip = styled.span<{ $type: '안전' | '주의' | '위험' }>`
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: ${props => {
+    if (props.$type === '안전') return '#52c41a22';
+    if (props.$type === '주의') return '#faad1422';
+    return '#f5222d22';
+  }};
+  color: ${props => {
+    if (props.$type === '안전') return '#52c41a';
+    if (props.$type === '주의') return '#faad14';
     return '#f5222d';
   }};
 `;
@@ -231,6 +314,55 @@ const ChartTitle = styled.h3`
   font-weight: 600;
   color: #ffffff;
   margin: 0 0 2rem 0;
+`;
+
+const SectionTitle = styled.h2`
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 2rem 0;
+`;
+
+const TwoColumnLayout = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const PriceDetailTable = styled.div`
+  background: #0a0a0a;
+  border: 1px solid #333333;
+  border-radius: 12px;
+  overflow: hidden;
+`;
+
+const PriceDetailRow = styled.div<{ $header?: boolean }>`
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  border-bottom: 1px solid #333333;
+  background: ${props => props.$header ? '#1a1a1a' : 'transparent'};
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const PriceDetailCell = styled.div<{ $header?: boolean; $align?: string }>`
+  padding: 1rem 1.5rem;
+  font-size: ${props => props.$header ? '14px' : '15px'};
+  font-weight: ${props => props.$header ? '600' : '500'};
+  color: ${props => props.$header ? '#999999' : '#ffffff'};
+  border-right: 1px solid #333333;
+  text-align: ${props => props.$align || 'left'};
+
+  &:last-child {
+    border-right: none;
+  }
 `;
 
 const BarChart = styled.div`
@@ -309,132 +441,149 @@ const TableCell = styled.div<{ $header?: boolean; $align?: string }>`
   }
 `;
 
-type TabType = '종합' | '가격분석' | '위험분석' | '위치정보';
+type TabType = '종합' | '가격분석' | '위험분석';
 
 export const AnalysisDashboard = () => {
   const [activeTab, setActiveTab] = useState<TabType>('종합');
 
   const renderOverview = () => {
-    // 점수 계산
-    const priceScore = 85;
-    const riskScore = 82;
-    const locationScore = 92;
-    const totalScore = Math.round((priceScore + riskScore + locationScore) / 3);
+    // 점수 계산 (실제 점수)
+    const PRICE_MAX_SCORE = 40; // 가격 매력도 만점
+    const RISK_MAX_SCORE = 60; // 권리 위험도 만점
+    
+    const priceActualScore = 34; // 가격 매력도 실제 점수 (40점 만점)
+    const riskActualScore = 49; // 권리 위험도 실제 점수 (60점 만점)
+    
+    // 100점 기준으로 환산된 점수
+    const priceConvertedScore = Math.round((priceActualScore / PRICE_MAX_SCORE) * 100);
+    const riskConvertedScore = Math.round((riskActualScore / RISK_MAX_SCORE) * 100);
+    
+    // 종합 투자 점수 (실제 점수 합계)
+    const totalScore = priceActualScore + riskActualScore;
+
+    // 가격 데이터
+    const appraisalPrice = 850000000; // 감정가
+    const minSalePrice = 680000000; // 최저가
+    const estimatedMarketPrice = 950000000; // 추정 시세
+    const locationImportance: '높음' | '보통' | '낮음' = '높음'; // 소재지 중요도
+    
+    // 가격 분석 계산
+    const appraisalRatio = calculateAppraisalRatio(minSalePrice, appraisalPrice);
+    const priceDifference = calculatePriceDifference(estimatedMarketPrice, minSalePrice);
+
+    // 위험 요소 데이터
+    const failedBidCount = 0; // 유찰 횟수
+    const claimAmount = 120000000; // 청구 금액
+    const claimAmountRatio = calculateClaimAmountRatio(claimAmount, minSalePrice);
+    const rightAnalysisResult: RightAnalysisResult = '양호'; // 권리 분석 결과
+    const propertyStatus: PropertyStatus = '관리 양호'; // 물건 상태
+    const dividendDeadline = '2025-03-15'; // 배당요구종기
+
+    // 등급과 코멘트 계산
+    const { grade, comment } = getScoreGradeAndComment(totalScore);
 
     return (
       <TabContent>
+        {/* 세 점수 한 줄 배치 */}
+        <ScoresRow>
         {/* 종합 점수 */}
         <TotalScoreCard>
           <TotalScoreLabel>AI 종합 투자 점수</TotalScoreLabel>
           <TotalScoreValue>{totalScore}점</TotalScoreValue>
-          <TotalScoreSubtext>
-            {totalScore >= 85 ? '매우 우수' : totalScore >= 70 ? '우수' : totalScore >= 60 ? '보통' : '낮음'}
-          </TotalScoreSubtext>
+            <TotalScoreSubtext>{grade}</TotalScoreSubtext>
+            <TotalScoreComment>{comment}</TotalScoreComment>
         </TotalScoreCard>
 
         {/* 주요 지표 요약 */}
         <SummaryGrid>
           <SummaryCard>
-            <SummaryTitle>가격 경쟁력</SummaryTitle>
+              <SummaryTitle>가격 매력 (40점)</SummaryTitle>
             <SummaryValue>
-              <ScoreBadge $score={priceScore}>{priceScore}점</ScoreBadge>
+                <ScoreBadge $score={priceConvertedScore}>{priceConvertedScore}점</ScoreBadge>
             </SummaryValue>
-            <SummarySubtext>시세 대비 매우 우수</SummarySubtext>
+              <SummarySubtext>({priceActualScore}/{PRICE_MAX_SCORE})</SummarySubtext>
           </SummaryCard>
 
           <SummaryCard>
-            <SummaryTitle>위험도 점수</SummaryTitle>
+              <SummaryTitle>권리 위험도 (60점)</SummaryTitle>
             <SummaryValue>
-              <ScoreBadge $score={riskScore}>{riskScore}점</ScoreBadge>
+                <ScoreBadge $score={riskConvertedScore}>{riskConvertedScore}점</ScoreBadge>
             </SummaryValue>
-            <SummarySubtext>권리관계 단순</SummarySubtext>
-          </SummaryCard>
-
-          <SummaryCard>
-            <SummaryTitle>입지 점수</SummaryTitle>
-            <SummaryValue>
-              <ScoreBadge $score={locationScore}>{locationScore}점</ScoreBadge>
-            </SummaryValue>
-            <SummarySubtext>교통/편의시설 우수</SummarySubtext>
+              <SummarySubtext>({riskActualScore}/{RISK_MAX_SCORE})</SummarySubtext>
           </SummaryCard>
         </SummaryGrid>
+        </ScoresRow>
 
-      {/* 투자 수익성 분석 */}
-      <AnalysisCard>
-        <CardTitle>투자 수익성</CardTitle>
-        <CardContent>
+        {/* 가격분석요약 및 주요위험요소 */}
+        <SummaryBoxesRow>
+          <SummaryBox>
+            <SummaryBoxTitle>가격분석요약</SummaryBoxTitle>
+            <SummaryBoxContent>
           <DataRow>
-            <DataLabel>예상 낙찰가</DataLabel>
-            <DataValue>680,000,000원</DataValue>
+                <DataLabel>감정가</DataLabel>
+                <DataValue>{formatPriceDetail(appraisalPrice)}</DataValue>
           </DataRow>
           <DataRow>
-            <DataLabel>예상 시장가</DataLabel>
-            <DataValue>950,000,000원</DataValue>
+                <DataLabel>최저가</DataLabel>
+                <DataValue>{formatPriceDetail(minSalePrice)}</DataValue>
           </DataRow>
           <DataRow>
-            <DataLabel>예상 수익률</DataLabel>
+                <DataLabel>감정가 대비</DataLabel>
+                <DataValue>{appraisalRatio}%</DataValue>
+          </DataRow>
+          <DataRow>
+                <DataLabel>추정 시세</DataLabel>
+                <DataValue>{formatPriceDetail(estimatedMarketPrice)}</DataValue>
+              </DataRow>
+              <DataRow>
+                <DataLabel>시세차익(예상)</DataLabel>
             <DataValue>
-              <HighlightValue $positive={true}>+39.7%</HighlightValue>
+                  <HighlightValue $positive={true}>
+                    +{formatPriceDetail(priceDifference)}
+                  </HighlightValue>
             </DataValue>
           </DataRow>
-          <DataRow>
-            <DataLabel>예상 수익금</DataLabel>
-            <DataValue>
-              <HighlightValue $positive={true}>+270,000,000원</HighlightValue>
-            </DataValue>
-          </DataRow>
-        </CardContent>
-      </AnalysisCard>
+              <DataRow>
+                <DataLabel>소재지 중요도</DataLabel>
+                <DataValue>{locationImportance}</DataValue>
+              </DataRow>
+            </SummaryBoxContent>
+          </SummaryBox>
 
-      {/* 주요 위험 요소 */}
-      <AnalysisCard>
-        <CardTitle>주요 위험 요소</CardTitle>
-        <CardContent>
+          <SummaryBox>
+            <SummaryBoxTitle>주요위험요소</SummaryBoxTitle>
+            <SummaryBoxContent>
           <DataRow>
-            <DataLabel>임차인</DataLabel>
-            <DataValue>1명 거주 중</DataValue>
+                <DataLabel>유찰 횟수</DataLabel>
+                <DataValue>{failedBidCount}회</DataValue>
           </DataRow>
           <DataRow>
-            <DataLabel>보증금</DataLabel>
-            <DataValue>50,000,000원</DataValue>
+                <DataLabel>청구 금액 비율</DataLabel>
+                <DataValue>{claimAmountRatio}%</DataValue>
           </DataRow>
           <DataRow>
-            <DataLabel>근저당/전세권</DataLabel>
+                <DataLabel>권리 분석 결과</DataLabel>
             <DataValue>
-              <HighlightValue $positive={true}>없음</HighlightValue>
+                  <HighlightValue $positive={isRightAnalysisGood(rightAnalysisResult)}>
+                    {rightAnalysisResult}
+                  </HighlightValue>
             </DataValue>
           </DataRow>
           <DataRow>
-            <DataLabel>권리분석 결과</DataLabel>
+                <DataLabel>물건 상태</DataLabel>
             <DataValue>
-              <HighlightValue $positive={true}>양호</HighlightValue>
+                  <HighlightValue $positive={isPropertyStatusGood(propertyStatus)}>
+                    {propertyStatus}
+                  </HighlightValue>
             </DataValue>
           </DataRow>
-        </CardContent>
-      </AnalysisCard>
-
-      {/* 입지 정보 요약 */}
-      <AnalysisCard>
-        <CardTitle>입지 정보 요약</CardTitle>
-        <CardContent>
           <DataRow>
-            <DataLabel>지하철역</DataLabel>
-            <DataValue>역삼역 도보 5분</DataValue>
+                <DataLabel>배당요구종기</DataLabel>
+                <DataValue>{dividendDeadline}</DataValue>
           </DataRow>
-          <DataRow>
-            <DataLabel>초등학교</DataLabel>
-            <DataValue>역삼초 도보 7분</DataValue>
-          </DataRow>
-          <DataRow>
-            <DataLabel>편의시설</DataLabel>
-            <DataValue>이마트 도보 10분</DataValue>
-          </DataRow>
-          <DataRow>
-            <DataLabel>주변 시세</DataLabel>
-            <DataValue>평균 이상</DataValue>
-          </DataRow>
-        </CardContent>
-      </AnalysisCard>
+            </SummaryBoxContent>
+          </SummaryBox>
+        </SummaryBoxesRow>
 
       {/* AI 종합 분석 */}
       <AIAnalysisSection>
@@ -492,133 +641,85 @@ export const AnalysisDashboard = () => {
     const appraisalPrice = 850000000; // 감정가
     const marketPrice = 950000000; // 주변시세
     const minSalePrice = 680000000; // 최저가
-    const area = 84.5; // 면적 (평수로 계산용)
-
-    // 최대값 기준으로 퍼센트 계산
-    const maxPrice = Math.max(appraisalPrice, marketPrice, minSalePrice);
-    const appraisalPercent = (appraisalPrice / maxPrice) * 100;
-    const marketPercent = (marketPrice / maxPrice) * 100;
-    const minSalePercent = (minSalePrice / maxPrice) * 100;
+    const priceActualScore = 34; // 가격 매력도 실제 점수 (40점 만점)
+    const locationImportance: '높음' | '보통' | '낮음' = '높음'; // 소재지 중요도
 
     // 할인율 계산
-    const discountRate = ((marketPrice - minSalePrice) / marketPrice * 100).toFixed(1);
-    
-    // 평당 가격 계산 (1평 = 3.3058㎡)
-    const pyeong = area / 3.3058;
-    const pricePerPyeong = Math.round(minSalePrice / pyeong);
+    const appraisalDiscountRate = Math.round(((appraisalPrice - minSalePrice) / appraisalPrice) * 100);
+    const marketDiscountRate = Math.round(((marketPrice - minSalePrice) / marketPrice) * 100);
 
-    const formatPrice = (price: number) => {
-      return `${(price / 100000000).toFixed(1)}억원`;
-    };
-
-    const formatPriceDetail = (price: number) => {
-      const billion = Math.floor(price / 100000000);
-      const million = Math.floor((price % 100000000) / 10000);
-      if (million === 0) {
-        return `${billion}억원`;
-      }
-      return `${billion}억 ${million}만원`;
-    };
+    // 가격 상세정보 점수 계산 (예시)
+    const itemScore = 10; // 항목 배점 득점 (예시)
 
     return (
       <TabContent>
-        {/* 가격 비교 차트 */}
-        <ChartContainer>
-          <ChartTitle>가격 비교</ChartTitle>
-          <BarChart>
-            <BarRow>
-              <BarLabel>주변시세</BarLabel>
-              <BarTrack>
-                <BarFill $width={marketPercent} $color="#52c41a">
-                  {formatPrice(marketPrice)}
-                </BarFill>
-              </BarTrack>
-            </BarRow>
+        <SectionTitle>세부 가격분석(점수 : {priceActualScore}/40)</SectionTitle>
 
-            <BarRow>
-              <BarLabel>감정가</BarLabel>
-              <BarTrack>
-                <BarFill $width={appraisalPercent} $color="#1890ff">
-                  {formatPrice(appraisalPrice)}
-                </BarFill>
-              </BarTrack>
-            </BarRow>
+        <TwoColumnLayout>
+          {/* 왼쪽: 시세 및 최저가 추이 */}
+          <div>
+            <CardTitle style={{ marginBottom: '1rem' }}>시세 및 최저가 추이</CardTitle>
+            {/* 빈 공간 */}
+          </div>
 
-            <BarRow>
-              <BarLabel>최저가</BarLabel>
-              <BarTrack>
-                <BarFill $width={minSalePercent} $color="#faad14">
-                  {formatPrice(minSalePrice)}
-                </BarFill>
-              </BarTrack>
-            </BarRow>
-          </BarChart>
-        </ChartContainer>
+          {/* 오른쪽: 가격 상세정보 */}
+          <div>
+            <CardTitle style={{ marginBottom: '1rem' }}>가격 상세 정보</CardTitle>
+            <div style={{ marginBottom: '1rem' }}>
+              <DataRow>
+                <DataLabel>감정가</DataLabel>
+                <DataValue>{formatPriceDetail(appraisalPrice)}</DataValue>
+              </DataRow>
+              <DataRow>
+                <DataLabel>최저가</DataLabel>
+                <DataValue>{formatPriceDetail(minSalePrice)}</DataValue>
+              </DataRow>
+            </div>
+            <div>
+              <DataRow style={{ paddingBottom: '0.5rem' }}>
+                <DataLabel style={{ fontSize: '16px', fontWeight: '600', color: '#ffffff' }}>항목</DataLabel>
+                <DataValue style={{ display: 'flex', gap: '4rem', minWidth: '200px', justifyContent: 'flex-end' }}>
+                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>배점</span>
+                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>득점</span>
+                </DataValue>
+              </DataRow>
+              <DataRow>
+                <DataLabel>감정가대비할인율</DataLabel>
+                <DataValue style={{ display: 'flex', gap: '4rem', minWidth: '200px', justifyContent: 'flex-end' }}>
+                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>15</span>
+                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>-</span>
+                </DataValue>
+              </DataRow>
+              <DataRow>
+                <DataLabel>시세대비할인율</DataLabel>
+                <DataValue style={{ display: 'flex', gap: '4rem', minWidth: '200px', justifyContent: 'flex-end' }}>
+                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>15</span>
+                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>-</span>
+                </DataValue>
+              </DataRow>
+              <DataRow>
+                <DataLabel>소재지 중요도</DataLabel>
+                <DataValue style={{ display: 'flex', gap: '4rem', minWidth: '200px', justifyContent: 'flex-end' }}>
+                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>10</span>
+                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>-</span>
+                </DataValue>
+              </DataRow>
+              <DataRow>
+                <DataLabel style={{ fontWeight: '700', color: '#ffffff' }}>합계</DataLabel>
+                <DataValue style={{ display: 'flex', gap: '4rem', minWidth: '200px', justifyContent: 'flex-end', fontWeight: '700', color: '#1890ff' }}>
+                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>40</span>
+                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>{priceActualScore}</span>
+                </DataValue>
+              </DataRow>
+            </div>
+          </div>
+        </TwoColumnLayout>
 
-        {/* 기본 가격 정보 */}
-        <PriceTable>
-          <TableRow>
-            <TableCell>주변시세</TableCell>
-            <TableCell>{formatPriceDetail(marketPrice)}</TableCell>
-          </TableRow>
-
-          <TableRow>
-            <TableCell>감정가</TableCell>
-            <TableCell>{formatPriceDetail(appraisalPrice)}</TableCell>
-          </TableRow>
-
-          <TableRow>
-            <TableCell>최저 매각가</TableCell>
-            <TableCell>{formatPriceDetail(minSalePrice)}</TableCell>
-          </TableRow>
-        </PriceTable>
-
-        {/* 추가 분석 정보 */}
-        <PriceTable>
-          <TableRow>
-            <TableCell>시세 대비 할인율</TableCell>
-            <TableCell style={{ color: '#52c41a', fontWeight: '700' }}>
-              {discountRate}%
-            </TableCell>
-          </TableRow>
-
-          <TableRow>
-            <TableCell>평당 가격 (최저가 기준)</TableCell>
-            <TableCell style={{ fontWeight: '700' }}>
-              {pricePerPyeong.toLocaleString()}만원
-            </TableCell>
-          </TableRow>
-
-          <TableRow>
-            <TableCell>감정가 대비 최저가</TableCell>
-            <TableCell style={{ color: '#1890ff', fontWeight: '700' }}>
-              {((minSalePrice / appraisalPrice) * 100).toFixed(1)}%
-            </TableCell>
-          </TableRow>
-
-          <TableRow>
-            <TableCell>시세 대비 예상 수익</TableCell>
-            <TableCell style={{ color: '#52c41a', fontWeight: '700' }}>
-              +{formatPriceDetail(marketPrice - minSalePrice)}
-            </TableCell>
-          </TableRow>
-        </PriceTable>
-
-        {/* 가격 분석 설명 */}
-        <AnalysisCard>
-          <CardTitle>가격 분석</CardTitle>
+        {/* 종합평가 */}
+        <AnalysisCard style={{ marginTop: '2rem' }}>
+          <CardTitle>종합평가</CardTitle>
           <CardContent>
-            <AIText style={{ color: '#cccccc', lineHeight: '1.8' }}>
-              본 물건의 최저 매각가는 <strong style={{ color: '#faad14' }}>{formatPriceDetail(minSalePrice)}</strong>로,
-              주변 시세인 <strong style={{ color: '#52c41a' }}>{formatPriceDetail(marketPrice)}</strong> 대비 
-              <strong style={{ color: '#52c41a' }}> {discountRate}% 할인</strong>된 가격입니다.
-              <br/><br/>
-              감정가 <strong style={{ color: '#1890ff' }}>{formatPriceDetail(appraisalPrice)}</strong>의 
-              <strong style={{ color: '#1890ff' }}> 80%</strong> 수준으로 시작하며,
-              평당 가격은 <strong style={{ color: '#ffffff' }}>{pricePerPyeong.toLocaleString()}만원</strong>입니다.
-              <br/><br/>
-              주변 시세 대비 저렴한 가격으로 시작하므로 투자 가치가 높은 것으로 평가됩니다.
-            </AIText>
+            {/* 종합평가 내용 */}
           </CardContent>
         </AnalysisCard>
       </TabContent>
@@ -626,243 +727,147 @@ export const AnalysisDashboard = () => {
   };
 
   const renderRiskAnalysis = () => {
+    // 위험 분석 점수
+    const RISK_MAX_SCORE = 60; // 권리 위험도 만점
+    const riskActualScore = 49; // 권리 위험도 실제 점수 (60점 만점)
+
     // 위험 분석 데이터
-    const riskLevel = '낮음';
-    const riskScore = 82;
-    const totalRiskAmount = 50000000; // 총 인수 위험 금액
-    
-    const formatPriceDetail = (price: number) => {
-      const billion = Math.floor(price / 100000000);
-      const million = Math.floor((price % 100000000) / 10000);
-      if (billion === 0) {
-        return `${million.toLocaleString()}만원`;
-      }
-      if (million === 0) {
-        return `${billion}억원`;
-      }
-      return `${billion}억 ${million.toLocaleString()}만원`;
+    const claimAmount = 120000000; // 청구 금액
+    const minSalePrice = 680000000; // 최저가
+    const claimAmountRatio = calculateClaimAmountRatio(claimAmount, minSalePrice);
+    const failedBidCount = 0; // 유찰 횟수
+    const propertyNoteScore = 8; // 물건비고 스코어링 (예시)
+    const propertyStatus: PropertyStatus = '관리 양호'; // 물건 상태
+    const dividendDeadline = '2025-03-15'; // 배당요구종기
+
+    // 점수에 따른 평가 결정 함수 (점수가 높을수록 안전)
+    const getEvaluation = (score: number, maxScore: number): '안전' | '주의' | '위험' => {
+      const ratio = (score / maxScore) * 100;
+      if (ratio >= 70) return '안전';
+      if (ratio >= 40) return '주의';
+      return '위험';
     };
 
-    return (
-      <TabContent>
-        {/* 위험도 요약 */}
-        <SummaryGrid>
-          <SummaryCard>
-            <SummaryTitle>위험도 레벨</SummaryTitle>
-            <SummaryValue>
-              <ScoreBadge $score={riskScore}>{riskLevel}</ScoreBadge>
-            </SummaryValue>
-            <SummarySubtext>Level 2 / 5단계</SummarySubtext>
-          </SummaryCard>
-
-          <SummaryCard>
-            <SummaryTitle>총 인수 위험 금액</SummaryTitle>
-            <SummaryValue style={{ fontSize: '22px' }}>
-              {formatPriceDetail(totalRiskAmount)}
-            </SummaryValue>
-            <SummarySubtext>임차보증금 합계</SummarySubtext>
-          </SummaryCard>
-
-          <SummaryCard>
-            <SummaryTitle>주요 위험 요소</SummaryTitle>
-            <SummaryValue style={{ fontSize: '22px', color: '#faad14' }}>
-              임차인 1명
-            </SummaryValue>
-            <SummarySubtext>권리관계 단순</SummarySubtext>
-          </SummaryCard>
-        </SummaryGrid>
-
-        {/* 선순위 권리관계 */}
-        <ChartContainer>
-          <ChartTitle>선순위 권리관계</ChartTitle>
-          <PriceTable style={{ marginBottom: 0 }}>
-            <TableRow $columns="150px 1fr 200px">
-              <TableCell style={{ fontWeight: '600', color: '#999999', borderRight: '1px solid #333333' }}>종류</TableCell>
-              <TableCell style={{ fontWeight: '600', color: '#999999', borderRight: '1px solid #333333' }}>권리자</TableCell>
-              <TableCell style={{ fontWeight: '600', color: '#999999' }}>금액</TableCell>
-            </TableRow>
-            <TableRow $columns="150px 1fr 200px">
-              <TableCell style={{ borderRight: '1px solid #333333' }}>근저당권</TableCell>
-              <TableCell style={{ borderRight: '1px solid #333333' }}>없음</TableCell>
-              <TableCell>-</TableCell>
-            </TableRow>
-            <TableRow $columns="150px 1fr 200px">
-              <TableCell style={{ borderRight: '1px solid #333333' }}>전세권</TableCell>
-              <TableCell style={{ borderRight: '1px solid #333333' }}>없음</TableCell>
-              <TableCell>-</TableCell>
-            </TableRow>
-            <TableRow $columns="150px 1fr 200px">
-              <TableCell style={{ borderRight: '1px solid #333333' }}>가압류</TableCell>
-              <TableCell style={{ borderRight: '1px solid #333333' }}>없음</TableCell>
-              <TableCell>-</TableCell>
-            </TableRow>
-            <TableRow $columns="150px 1fr 200px">
-              <TableCell style={{ borderRight: '1px solid #333333' }}>가등기</TableCell>
-              <TableCell style={{ borderRight: '1px solid #333333' }}>없음</TableCell>
-              <TableCell>-</TableCell>
-            </TableRow>
-          </PriceTable>
-        </ChartContainer>
-
-        {/* 임차인 정보 */}
-        <ChartContainer>
-          <ChartTitle>임차인 정보</ChartTitle>
-          <PriceTable style={{ marginBottom: 0 }}>
-            <TableRow $columns="1fr 1fr">
-              <TableCell style={{ fontWeight: '600', color: '#999999', borderRight: '1px solid #333333' }}>보증금</TableCell>
-              <TableCell style={{ fontWeight: '600', color: '#999999' }}>전입일자</TableCell>
-            </TableRow>
-            <TableRow $columns="1fr 1fr">
-              <TableCell style={{ borderRight: '1px solid #333333', color: '#faad14', fontWeight: '700' }}>
-                {formatPriceDetail(50000000)}
-              </TableCell>
-              <TableCell>2023년 3월 15일</TableCell>
-            </TableRow>
-          </PriceTable>
-        </ChartContainer>
-
-        {/* 위험 분석 설명 */}
-        <AnalysisCard>
-          <CardTitle>위험 분석</CardTitle>
-          <CardContent>
-            <AIText style={{ color: '#cccccc', lineHeight: '1.8' }}>
-              본 물건은 <strong style={{ color: '#52c41a' }}>선순위 권리관계가 없어</strong> 권리분석이 단순한 편입니다.
-              <br/><br/>
-              <strong style={{ color: '#faad14' }}>임차인 1명이 거주 중</strong>이며, 보증금은 
-              <strong style={{ color: '#faad14' }}> 5천만원</strong>입니다. 
-              전입일자는 2023년 3월 15일로, 대항력을 갖춘 상태이므로 낙찰 후 임차보증금을 인수해야 합니다.
-              <br/><br/>
-              근저당권, 전세권 등 다른 권리가 없어 <strong style={{ color: '#52c41a' }}>비교적 안전한 투자</strong>가 가능하나,
-              임차인과의 협의 과정이 필요할 수 있습니다. 예상 소요 기간은 <strong style={{ color: '#ffffff' }}>3~6개월</strong> 정도입니다.
-            </AIText>
-          </CardContent>
-        </AnalysisCard>
-      </TabContent>
-    );
-  };
-
-  const renderLocationInfo = () => {
-    const locationScore = 92; // 위치 점수
+    // 각 항목의 점수와 배점 (예시 데이터)
+    const claimAmountScore = 12; // 청구금액 비율 점수
+    const claimAmountMaxScore = 15; // 청구금액 비율 배점
+    const failedBidScore = 15; // 유찰 횟수 점수
+    const failedBidMaxScore = 15; // 유찰 횟수 배점
+    const propertyNoteMaxScore = 10; // 물건비고 스코어링 배점
+    const propertyStatusScore = 8; // 물건 상태 점수
+    const propertyStatusMaxScore = 10; // 물건 상태 배점
+    const dividendScore = 5; // 배당요구종기 점수
+    const dividendMaxScore = 10; // 배당요구종기 배점
 
     return (
       <TabContent>
-        {/* 위치 정보 요약 */}
-        <SummaryGrid>
-          <SummaryCard>
-            <SummaryTitle>위치 점수</SummaryTitle>
-            <SummaryValue>
-              <ScoreBadge $score={locationScore}>{locationScore}점</ScoreBadge>
-            </SummaryValue>
-            <SummarySubtext>매우 우수한 입지</SummarySubtext>
-          </SummaryCard>
+        <SectionTitle>세부 위험분석 (점수: {riskActualScore}/60)</SectionTitle>
+        
+        <CardTitle style={{ marginBottom: '1rem' }}>권리 및 상태 상세 정보</CardTitle>
+        
+        <div>
+          {/* 헤더 */}
+          <DataRow style={{ paddingBottom: '0.5rem', fontWeight: '600', color: '#ffffff' }}>
+            <DataLabel style={{ fontSize: '16px', fontWeight: '600', color: '#ffffff', flex: '0 0 50px' }}>항목</DataLabel>
+            <DataValue style={{ display: 'flex', gap: '2rem', minWidth: '400px', justifyContent: 'flex-start', textAlign: 'left' }}>
+              <span style={{ flex: '0 0 100px' }}>데이터</span>
+              <span style={{ flex: '0 0 80px' }}>평가</span>
+              <span style={{ flex: '0 0 100px', textAlign: 'center' }}>점수(배점)</span>
+              <span style={{ flex: '1' }}>분석</span>
+            </DataValue>
+          </DataRow>
 
-          <SummaryCard>
-            <SummaryTitle>도로 접근성</SummaryTitle>
-            <SummaryValue style={{ fontSize: '22px', color: '#52c41a' }}>
-              우수
-            </SummaryValue>
-            <SummarySubtext>대로변 인접</SummarySubtext>
-          </SummaryCard>
+          {/* 청구금액 비율 */}
+          <DataRow>
+            <DataLabel style={{ flex: '0 0 50px', fontSize: '13px' }}>청구금액 비율</DataLabel>
+            <DataValue style={{ display: 'flex', gap: '2rem', minWidth: '400px', justifyContent: 'flex-start', textAlign: 'left', alignItems: 'center' }}>
+              <span style={{ flex: '0 0 100px' }}>{claimAmountRatio}%</span>
+              <span style={{ flex: '0 0 80px' }}>
+                <EvaluationChip $type={getEvaluation(claimAmountScore, claimAmountMaxScore)}>
+                  {getEvaluation(claimAmountScore, claimAmountMaxScore)}
+                </EvaluationChip>
+              </span>
+              <span style={{ flex: '0 0 100px', textAlign: 'center' }}>
+                {claimAmountScore}/{claimAmountMaxScore}
+              </span>
+              <span style={{ flex: '1' }}>-</span>
+            </DataValue>
+          </DataRow>
 
-          <SummaryCard>
-            <SummaryTitle>도로 정보</SummaryTitle>
-            <SummaryValue style={{ fontSize: '22px' }}>
-              20m
-            </SummaryValue>
-            <SummarySubtext>도로 폭원</SummarySubtext>
-          </SummaryCard>
-        </SummaryGrid>
+          {/* 유찰 횟수 */}
+          <DataRow>
+            <DataLabel style={{ flex: '0 0 50px', fontSize: '13px' }}>유찰 횟수</DataLabel>
+            <DataValue style={{ display: 'flex', gap: '2rem', minWidth: '400px', justifyContent: 'flex-start', textAlign: 'left', alignItems: 'center' }}>
+              <span style={{ flex: '0 0 100px' }}>{failedBidCount}회</span>
+              <span style={{ flex: '0 0 80px' }}>
+                <EvaluationChip $type={getEvaluation(failedBidScore, failedBidMaxScore)}>
+                  {getEvaluation(failedBidScore, failedBidMaxScore)}
+                </EvaluationChip>
+              </span>
+              <span style={{ flex: '0 0 100px', textAlign: 'center' }}>
+                {failedBidScore}/{failedBidMaxScore}
+              </span>
+              <span style={{ flex: '1' }}>-</span>
+            </DataValue>
+          </DataRow>
 
-        {/* 주요 시설 정보 */}
-        <ChartContainer>
-          <ChartTitle>주요 시설 접근성</ChartTitle>
-          <PriceTable style={{ marginBottom: 0 }}>
-            <TableRow $columns="200px 1fr 150px">
-              <TableCell style={{ fontWeight: '600', color: '#999999', borderRight: '1px solid #333333' }}>시설</TableCell>
-              <TableCell style={{ fontWeight: '600', color: '#999999', borderRight: '1px solid #333333' }}>명칭</TableCell>
-              <TableCell style={{ fontWeight: '600', color: '#999999' }}>거리</TableCell>
-            </TableRow>
-            <TableRow $columns="200px 1fr 150px">
-              <TableCell style={{ borderRight: '1px solid #333333' }}>지하철역</TableCell>
-              <TableCell style={{ borderRight: '1px solid #333333' }}>역삼역 (2호선)</TableCell>
-              <TableCell style={{ color: '#52c41a', fontWeight: '700' }}>도보 5분</TableCell>
-            </TableRow>
-            <TableRow $columns="200px 1fr 150px">
-              <TableCell style={{ borderRight: '1px solid #333333' }}>버스정류장</TableCell>
-              <TableCell style={{ borderRight: '1px solid #333333' }}>역삼역</TableCell>
-              <TableCell style={{ color: '#52c41a', fontWeight: '700' }}>도보 3분</TableCell>
-            </TableRow>
-            <TableRow $columns="200px 1fr 150px">
-              <TableCell style={{ borderRight: '1px solid #333333' }}>초등학교</TableCell>
-              <TableCell style={{ borderRight: '1px solid #333333' }}>역삼초등학교</TableCell>
-              <TableCell style={{ color: '#52c41a', fontWeight: '700' }}>도보 7분</TableCell>
-            </TableRow>
-            <TableRow $columns="200px 1fr 150px">
-              <TableCell style={{ borderRight: '1px solid #333333' }}>중학교</TableCell>
-              <TableCell style={{ borderRight: '1px solid #333333' }}>역삼중학교</TableCell>
-              <TableCell style={{ fontWeight: '700' }}>도보 12분</TableCell>
-            </TableRow>
-            <TableRow $columns="200px 1fr 150px">
-              <TableCell style={{ borderRight: '1px solid #333333' }}>대형마트</TableCell>
-              <TableCell style={{ borderRight: '1px solid #333333' }}>이마트 역삼점</TableCell>
-              <TableCell style={{ fontWeight: '700' }}>도보 10분</TableCell>
-            </TableRow>
-            <TableRow $columns="200px 1fr 150px">
-              <TableCell style={{ borderRight: '1px solid #333333' }}>편의점</TableCell>
-              <TableCell style={{ borderRight: '1px solid #333333' }}>CU, GS25</TableCell>
-              <TableCell style={{ color: '#52c41a', fontWeight: '700' }}>도보 2분</TableCell>
-            </TableRow>
-            <TableRow $columns="200px 1fr 150px">
-              <TableCell style={{ borderRight: '1px solid #333333' }}>병원</TableCell>
-              <TableCell style={{ borderRight: '1px solid #333333' }}>강남세브란스병원</TableCell>
-              <TableCell style={{ fontWeight: '700' }}>차량 10분</TableCell>
-            </TableRow>
-          </PriceTable>
-        </ChartContainer>
+          {/* 물건비고 스코어링 */}
+          <DataRow>
+            <DataLabel style={{ flex: '0 0 50px', fontSize: '13px' }}>물건비고 스코어링</DataLabel>
+            <DataValue style={{ display: 'flex', gap: '2rem', minWidth: '400px', justifyContent: 'flex-start', textAlign: 'left', alignItems: 'center' }}>
+              <span style={{ flex: '0 0 100px' }}>{propertyNoteScore}점</span>
+              <span style={{ flex: '0 0 80px' }}>
+                <EvaluationChip $type={getEvaluation(propertyNoteScore, propertyNoteMaxScore)}>
+                  {getEvaluation(propertyNoteScore, propertyNoteMaxScore)}
+                </EvaluationChip>
+              </span>
+              <span style={{ flex: '0 0 100px', textAlign: 'center' }}>
+                {propertyNoteScore}/{propertyNoteMaxScore}
+              </span>
+              <span style={{ flex: '1' }}>-</span>
+            </DataValue>
+          </DataRow>
 
-        {/* 지도 */}
-        <ChartContainer>
-          <ChartTitle>위치 지도</ChartTitle>
-          <div style={{ 
-            width: '100%', 
-            height: '400px', 
-            background: '#1a1a1a',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexDirection: 'column',
-            gap: '1rem',
-            border: '1px solid #333333'
-          }}>
-            <div style={{ fontSize: '48px' }}>🗺️</div>
-            <div style={{ color: '#666666', fontSize: '16px' }}>
-              서울특별시 강남구 테헤란로 123
+          {/* 물건 상태 */}
+          <DataRow>
+            <DataLabel style={{ flex: '0 0 50px', fontSize: '13px' }}>물건 상태</DataLabel>
+            <DataValue style={{ display: 'flex', gap: '2rem', minWidth: '400px', justifyContent: 'flex-start', textAlign: 'left', alignItems: 'center' }}>
+              <span style={{ flex: '0 0 100px' }}>{propertyStatus}</span>
+              <span style={{ flex: '0 0 80px' }}>
+                <EvaluationChip $type={getEvaluation(propertyStatusScore, propertyStatusMaxScore)}>
+                  {getEvaluation(propertyStatusScore, propertyStatusMaxScore)}
+                </EvaluationChip>
+              </span>
+              <span style={{ flex: '0 0 100px', textAlign: 'center' }}>
+                {propertyStatusScore}/{propertyStatusMaxScore}
+              </span>
+              <span style={{ flex: '1' }}>-</span>
+            </DataValue>
+          </DataRow>
+
+          {/* 배당요구종기 */}
+          <DataRow>
+            <DataLabel style={{ flex: '0 0 50px', fontSize: '13px' }}>배당요구종기</DataLabel>
+            <DataValue style={{ display: 'flex', gap: '2rem', minWidth: '400px', justifyContent: 'flex-start', textAlign: 'left', alignItems: 'center' }}>
+              <span style={{ flex: '0 0 100px' }}>{dividendDeadline}</span>
+              <span style={{ flex: '0 0 80px' }}>
+                <EvaluationChip $type={getEvaluation(dividendScore, dividendMaxScore)}>
+                  {getEvaluation(dividendScore, dividendMaxScore)}
+                </EvaluationChip>
+              </span>
+              <span style={{ flex: '0 0 100px', textAlign: 'center' }}>
+                {dividendScore}/{dividendMaxScore}
+              </span>
+              <span style={{ flex: '1' }}>-</span>
+            </DataValue>
+          </DataRow>
             </div>
-            <div style={{ color: '#999999', fontSize: '14px' }}>
-              지도 API 연동 예정
-            </div>
-          </div>
-        </ChartContainer>
 
-        {/* 위치 분석 설명 */}
-        <AnalysisCard>
-          <CardTitle>위치 분석</CardTitle>
+        {/* 종합평가 */}
+        <AnalysisCard style={{ marginTop: '2rem' }}>
+          <CardTitle>종합평가</CardTitle>
           <CardContent>
-            <AIText style={{ color: '#cccccc', lineHeight: '1.8' }}>
-              본 물건은 <strong style={{ color: '#52c41a' }}>강남구 테헤란로</strong>에 위치하여 
-              <strong style={{ color: '#52c41a' }}> 업무/상업 지역</strong>의 중심지입니다.
-              <br/><br/>
-              지하철 <strong style={{ color: '#52c41a' }}>2호선 역삼역</strong>까지 도보 5분 거리로 
-              <strong style={{ color: '#52c41a' }}> 대중교통 접근성이 매우 우수</strong>하며,
-              버스 정류장도 도보 3분 거리에 있어 출퇴근이 편리합니다.
-              <br/><br/>
-              주변에 <strong style={{ color: '#ffffff' }}>초중학교, 대형마트, 병원</strong> 등 생활 편의시설이 잘 갖춰져 있으며,
-              도로 폭원 <strong style={{ color: '#ffffff' }}>20m의 대로변</strong>에 위치하여 차량 접근성도 양호합니다.
-              <br/><br/>
-              강남구의 핵심 업무지구로 <strong style={{ color: '#52c41a' }}>실거주 및 임대 수요가 높은 지역</strong>이며,
-              향후 부동산 가치 상승이 기대되는 입지입니다.
-            </AIText>
+            {/* 종합평가 내용 */}
           </CardContent>
         </AnalysisCard>
       </TabContent>
@@ -890,18 +895,11 @@ export const AnalysisDashboard = () => {
         >
           위험분석
         </Tab>
-        <Tab 
-          $active={activeTab === '위치정보'} 
-          onClick={() => setActiveTab('위치정보')}
-        >
-          위치정보
-        </Tab>
       </TabContainer>
 
       {activeTab === '종합' && renderOverview()}
       {activeTab === '가격분석' && renderPriceAnalysis()}
       {activeTab === '위험분석' && renderRiskAnalysis()}
-      {activeTab === '위치정보' && renderLocationInfo()}
     </Container>
   );
 };

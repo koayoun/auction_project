@@ -240,6 +240,19 @@ interface AuctionFiltersProps {
   onSearch?: () => void;
 }
 
+// 현재 날짜에서 한 달 전 날짜를 계산하는 함수
+const getOneMonthAgoDate = (): string => {
+  const today = new Date();
+  const oneMonthAgo = new Date(today);
+  oneMonthAgo.setMonth(today.getMonth() - 1);
+  return oneMonthAgo.toISOString().split('T')[0];
+};
+
+// 현재 날짜를 YYYY-MM-DD 형식으로 반환하는 함수
+const getTodayDate = (): string => {
+  return new Date().toISOString().split('T')[0];
+};
+
 export const AuctionFilters = ({ onSearch }: AuctionFiltersProps) => {
   const [showCourtSelect, setShowCourtSelect] = useState(true);
   const [showLocationSelect, setShowLocationSelect] = useState(false);
@@ -248,8 +261,8 @@ export const AuctionFilters = ({ onSearch }: AuctionFiltersProps) => {
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [selectedTown, setSelectedTown] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState(getOneMonthAgoDate());
+  const [endDate, setEndDate] = useState(getTodayDate());
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [minArea, setMinArea] = useState('');
@@ -384,8 +397,8 @@ export const AuctionFilters = ({ onSearch }: AuctionFiltersProps) => {
     setSelectedCity('');
     setSelectedDistrict('');
     setSelectedTown('');
-    setStartDate('');
-    setEndDate('');
+    setStartDate(getOneMonthAgoDate());
+    setEndDate(getTodayDate());
     setMinPrice('');
     setMaxPrice('');
     setMinArea('');

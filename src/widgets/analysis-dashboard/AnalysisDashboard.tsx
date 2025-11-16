@@ -240,6 +240,24 @@ const ScoreBadge = styled.div<{ $score: number }>`
   }};
 `;
 
+const EvaluationChip = styled.span<{ $type: '안전' | '주의' | '위험' }>`
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: ${props => {
+    if (props.$type === '안전') return '#52c41a22';
+    if (props.$type === '주의') return '#faad1422';
+    return '#f5222d22';
+  }};
+  color: ${props => {
+    if (props.$type === '안전') return '#52c41a';
+    if (props.$type === '주의') return '#faad14';
+    return '#f5222d';
+  }};
+`;
+
 const AIAnalysisSection = styled.div`
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   border: 1px solid #0f3460;
@@ -468,32 +486,32 @@ export const AnalysisDashboard = () => {
       <TabContent>
         {/* 세 점수 한 줄 배치 */}
         <ScoresRow>
-          {/* 종합 점수 */}
-          <TotalScoreCard>
-            <TotalScoreLabel>AI 종합 투자 점수</TotalScoreLabel>
-            <TotalScoreValue>{totalScore}점</TotalScoreValue>
+        {/* 종합 점수 */}
+        <TotalScoreCard>
+          <TotalScoreLabel>AI 종합 투자 점수</TotalScoreLabel>
+          <TotalScoreValue>{totalScore}점</TotalScoreValue>
             <TotalScoreSubtext>{grade}</TotalScoreSubtext>
             <TotalScoreComment>{comment}</TotalScoreComment>
-          </TotalScoreCard>
+        </TotalScoreCard>
 
-          {/* 주요 지표 요약 */}
-          <SummaryGrid>
-            <SummaryCard>
+        {/* 주요 지표 요약 */}
+        <SummaryGrid>
+          <SummaryCard>
               <SummaryTitle>가격 매력 (40점)</SummaryTitle>
-              <SummaryValue>
+            <SummaryValue>
                 <ScoreBadge $score={priceConvertedScore}>{priceConvertedScore}점</ScoreBadge>
-              </SummaryValue>
+            </SummaryValue>
               <SummarySubtext>({priceActualScore}/{PRICE_MAX_SCORE})</SummarySubtext>
-            </SummaryCard>
+          </SummaryCard>
 
-            <SummaryCard>
+          <SummaryCard>
               <SummaryTitle>권리 위험도 (60점)</SummaryTitle>
-              <SummaryValue>
+            <SummaryValue>
                 <ScoreBadge $score={riskConvertedScore}>{riskConvertedScore}점</ScoreBadge>
-              </SummaryValue>
+            </SummaryValue>
               <SummarySubtext>({riskActualScore}/{RISK_MAX_SCORE})</SummarySubtext>
-            </SummaryCard>
-          </SummaryGrid>
+          </SummaryCard>
+        </SummaryGrid>
         </ScoresRow>
 
         {/* 가격분석요약 및 주요위험요소 */}
@@ -501,30 +519,30 @@ export const AnalysisDashboard = () => {
           <SummaryBox>
             <SummaryBoxTitle>가격분석요약</SummaryBoxTitle>
             <SummaryBoxContent>
-              <DataRow>
+          <DataRow>
                 <DataLabel>감정가</DataLabel>
                 <DataValue>{formatPriceDetail(appraisalPrice)}</DataValue>
-              </DataRow>
-              <DataRow>
+          </DataRow>
+          <DataRow>
                 <DataLabel>최저가</DataLabel>
                 <DataValue>{formatPriceDetail(minSalePrice)}</DataValue>
-              </DataRow>
-              <DataRow>
+          </DataRow>
+          <DataRow>
                 <DataLabel>감정가 대비</DataLabel>
                 <DataValue>{appraisalRatio}%</DataValue>
-              </DataRow>
-              <DataRow>
+          </DataRow>
+          <DataRow>
                 <DataLabel>추정 시세</DataLabel>
                 <DataValue>{formatPriceDetail(estimatedMarketPrice)}</DataValue>
               </DataRow>
               <DataRow>
                 <DataLabel>시세차익(예상)</DataLabel>
-                <DataValue>
+            <DataValue>
                   <HighlightValue $positive={true}>
                     +{formatPriceDetail(priceDifference)}
                   </HighlightValue>
-                </DataValue>
-              </DataRow>
+            </DataValue>
+          </DataRow>
               <DataRow>
                 <DataLabel>소재지 중요도</DataLabel>
                 <DataValue>{locationImportance}</DataValue>
@@ -535,34 +553,34 @@ export const AnalysisDashboard = () => {
           <SummaryBox>
             <SummaryBoxTitle>주요위험요소</SummaryBoxTitle>
             <SummaryBoxContent>
-              <DataRow>
+          <DataRow>
                 <DataLabel>유찰 횟수</DataLabel>
                 <DataValue>{failedBidCount}회</DataValue>
-              </DataRow>
-              <DataRow>
+          </DataRow>
+          <DataRow>
                 <DataLabel>청구 금액 비율</DataLabel>
                 <DataValue>{claimAmountRatio}%</DataValue>
-              </DataRow>
-              <DataRow>
+          </DataRow>
+          <DataRow>
                 <DataLabel>권리 분석 결과</DataLabel>
-                <DataValue>
+            <DataValue>
                   <HighlightValue $positive={isRightAnalysisGood(rightAnalysisResult)}>
                     {rightAnalysisResult}
                   </HighlightValue>
-                </DataValue>
-              </DataRow>
-              <DataRow>
+            </DataValue>
+          </DataRow>
+          <DataRow>
                 <DataLabel>물건 상태</DataLabel>
-                <DataValue>
+            <DataValue>
                   <HighlightValue $positive={isPropertyStatusGood(propertyStatus)}>
                     {propertyStatus}
                   </HighlightValue>
-                </DataValue>
-              </DataRow>
-              <DataRow>
+            </DataValue>
+          </DataRow>
+          <DataRow>
                 <DataLabel>배당요구종기</DataLabel>
                 <DataValue>{dividendDeadline}</DataValue>
-              </DataRow>
+          </DataRow>
             </SummaryBoxContent>
           </SummaryBox>
         </SummaryBoxesRow>
@@ -722,6 +740,25 @@ export const AnalysisDashboard = () => {
     const propertyStatus: PropertyStatus = '관리 양호'; // 물건 상태
     const dividendDeadline = '2025-03-15'; // 배당요구종기
 
+    // 점수에 따른 평가 결정 함수 (점수가 높을수록 안전)
+    const getEvaluation = (score: number, maxScore: number): '안전' | '주의' | '위험' => {
+      const ratio = (score / maxScore) * 100;
+      if (ratio >= 70) return '안전';
+      if (ratio >= 40) return '주의';
+      return '위험';
+    };
+
+    // 각 항목의 점수와 배점 (예시 데이터)
+    const claimAmountScore = 12; // 청구금액 비율 점수
+    const claimAmountMaxScore = 15; // 청구금액 비율 배점
+    const failedBidScore = 15; // 유찰 횟수 점수
+    const failedBidMaxScore = 15; // 유찰 횟수 배점
+    const propertyNoteMaxScore = 10; // 물건비고 스코어링 배점
+    const propertyStatusScore = 8; // 물건 상태 점수
+    const propertyStatusMaxScore = 10; // 물건 상태 배점
+    const dividendScore = 5; // 배당요구종기 점수
+    const dividendMaxScore = 10; // 배당요구종기 배점
+
     return (
       <TabContent>
         <SectionTitle>세부 위험분석 (점수: {riskActualScore}/60)</SectionTitle>
@@ -731,7 +768,7 @@ export const AnalysisDashboard = () => {
         <div>
           {/* 헤더 */}
           <DataRow style={{ paddingBottom: '0.5rem', fontWeight: '600', color: '#ffffff' }}>
-            <DataLabel style={{ fontSize: '16px', fontWeight: '600', color: '#ffffff', flex: '0 0 120px' }}>항목</DataLabel>
+            <DataLabel style={{ fontSize: '16px', fontWeight: '600', color: '#ffffff', flex: '0 0 50px' }}>항목</DataLabel>
             <DataValue style={{ display: 'flex', gap: '2rem', minWidth: '400px', justifyContent: 'flex-start', textAlign: 'left' }}>
               <span style={{ flex: '0 0 100px' }}>데이터</span>
               <span style={{ flex: '0 0 80px' }}>평가</span>
@@ -742,59 +779,97 @@ export const AnalysisDashboard = () => {
 
           {/* 청구금액 비율 */}
           <DataRow>
-            <DataLabel style={{ flex: '0 0 120px' }}>청구금액 비율</DataLabel>
-            <DataValue style={{ display: 'flex', gap: '2rem', minWidth: '400px', justifyContent: 'flex-start', textAlign: 'left' }}>
+            <DataLabel style={{ flex: '0 0 50px', fontSize: '13px' }}>청구금액 비율</DataLabel>
+            <DataValue style={{ display: 'flex', gap: '2rem', minWidth: '400px', justifyContent: 'flex-start', textAlign: 'left', alignItems: 'center' }}>
               <span style={{ flex: '0 0 100px' }}>{claimAmountRatio}%</span>
-              <span style={{ flex: '0 0 80px' }}>-</span>
-              <span style={{ flex: '0 0 100px', textAlign: 'center' }}>-</span>
+              <span style={{ flex: '0 0 80px' }}>
+                <EvaluationChip $type={getEvaluation(claimAmountScore, claimAmountMaxScore)}>
+                  {getEvaluation(claimAmountScore, claimAmountMaxScore)}
+                </EvaluationChip>
+              </span>
+              <span style={{ flex: '0 0 100px', textAlign: 'center' }}>
+                {claimAmountScore}/{claimAmountMaxScore}
+              </span>
               <span style={{ flex: '1' }}>-</span>
             </DataValue>
           </DataRow>
 
           {/* 유찰 횟수 */}
           <DataRow>
-            <DataLabel style={{ flex: '0 0 120px' }}>유찰 횟수</DataLabel>
-            <DataValue style={{ display: 'flex', gap: '2rem', minWidth: '400px', justifyContent: 'flex-start', textAlign: 'left' }}>
+            <DataLabel style={{ flex: '0 0 50px', fontSize: '13px' }}>유찰 횟수</DataLabel>
+            <DataValue style={{ display: 'flex', gap: '2rem', minWidth: '400px', justifyContent: 'flex-start', textAlign: 'left', alignItems: 'center' }}>
               <span style={{ flex: '0 0 100px' }}>{failedBidCount}회</span>
-              <span style={{ flex: '0 0 80px' }}>-</span>
-              <span style={{ flex: '0 0 100px', textAlign: 'center' }}>-</span>
+              <span style={{ flex: '0 0 80px' }}>
+                <EvaluationChip $type={getEvaluation(failedBidScore, failedBidMaxScore)}>
+                  {getEvaluation(failedBidScore, failedBidMaxScore)}
+                </EvaluationChip>
+              </span>
+              <span style={{ flex: '0 0 100px', textAlign: 'center' }}>
+                {failedBidScore}/{failedBidMaxScore}
+              </span>
               <span style={{ flex: '1' }}>-</span>
             </DataValue>
           </DataRow>
 
           {/* 물건비고 스코어링 */}
           <DataRow>
-            <DataLabel style={{ flex: '0 0 120px' }}>물건비고 스코어링</DataLabel>
-            <DataValue style={{ display: 'flex', gap: '2rem', minWidth: '400px', justifyContent: 'flex-start', textAlign: 'left' }}>
+            <DataLabel style={{ flex: '0 0 50px', fontSize: '13px' }}>물건비고 스코어링</DataLabel>
+            <DataValue style={{ display: 'flex', gap: '2rem', minWidth: '400px', justifyContent: 'flex-start', textAlign: 'left', alignItems: 'center' }}>
               <span style={{ flex: '0 0 100px' }}>{propertyNoteScore}점</span>
-              <span style={{ flex: '0 0 80px' }}>-</span>
-              <span style={{ flex: '0 0 100px', textAlign: 'center' }}>-</span>
+              <span style={{ flex: '0 0 80px' }}>
+                <EvaluationChip $type={getEvaluation(propertyNoteScore, propertyNoteMaxScore)}>
+                  {getEvaluation(propertyNoteScore, propertyNoteMaxScore)}
+                </EvaluationChip>
+              </span>
+              <span style={{ flex: '0 0 100px', textAlign: 'center' }}>
+                {propertyNoteScore}/{propertyNoteMaxScore}
+              </span>
               <span style={{ flex: '1' }}>-</span>
             </DataValue>
           </DataRow>
 
           {/* 물건 상태 */}
           <DataRow>
-            <DataLabel style={{ flex: '0 0 120px' }}>물건 상태</DataLabel>
-            <DataValue style={{ display: 'flex', gap: '2rem', minWidth: '400px', justifyContent: 'flex-start', textAlign: 'left' }}>
+            <DataLabel style={{ flex: '0 0 50px', fontSize: '13px' }}>물건 상태</DataLabel>
+            <DataValue style={{ display: 'flex', gap: '2rem', minWidth: '400px', justifyContent: 'flex-start', textAlign: 'left', alignItems: 'center' }}>
               <span style={{ flex: '0 0 100px' }}>{propertyStatus}</span>
-              <span style={{ flex: '0 0 80px' }}>-</span>
-              <span style={{ flex: '0 0 100px', textAlign: 'center' }}>-</span>
+              <span style={{ flex: '0 0 80px' }}>
+                <EvaluationChip $type={getEvaluation(propertyStatusScore, propertyStatusMaxScore)}>
+                  {getEvaluation(propertyStatusScore, propertyStatusMaxScore)}
+                </EvaluationChip>
+              </span>
+              <span style={{ flex: '0 0 100px', textAlign: 'center' }}>
+                {propertyStatusScore}/{propertyStatusMaxScore}
+              </span>
               <span style={{ flex: '1' }}>-</span>
             </DataValue>
           </DataRow>
 
           {/* 배당요구종기 */}
           <DataRow>
-            <DataLabel style={{ flex: '0 0 120px' }}>배당요구종기</DataLabel>
-            <DataValue style={{ display: 'flex', gap: '2rem', minWidth: '400px', justifyContent: 'flex-start', textAlign: 'left' }}>
+            <DataLabel style={{ flex: '0 0 50px', fontSize: '13px' }}>배당요구종기</DataLabel>
+            <DataValue style={{ display: 'flex', gap: '2rem', minWidth: '400px', justifyContent: 'flex-start', textAlign: 'left', alignItems: 'center' }}>
               <span style={{ flex: '0 0 100px' }}>{dividendDeadline}</span>
-              <span style={{ flex: '0 0 80px' }}>-</span>
-              <span style={{ flex: '0 0 100px', textAlign: 'center' }}>-</span>
+              <span style={{ flex: '0 0 80px' }}>
+                <EvaluationChip $type={getEvaluation(dividendScore, dividendMaxScore)}>
+                  {getEvaluation(dividendScore, dividendMaxScore)}
+                </EvaluationChip>
+              </span>
+              <span style={{ flex: '0 0 100px', textAlign: 'center' }}>
+                {dividendScore}/{dividendMaxScore}
+              </span>
               <span style={{ flex: '1' }}>-</span>
             </DataValue>
           </DataRow>
-        </div>
+            </div>
+
+        {/* 종합평가 */}
+        <AnalysisCard style={{ marginTop: '2rem' }}>
+          <CardTitle>종합평가</CardTitle>
+          <CardContent>
+            {/* 종합평가 내용 */}
+          </CardContent>
+        </AnalysisCard>
       </TabContent>
     );
   };

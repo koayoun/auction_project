@@ -140,6 +140,12 @@ export const AuctionCard = ({ item }: AuctionCardProps) => {
             <InfoValue>{item.failedBidCount}회</InfoValue>
           </InfoItem>
         )}
+        {item.dividendDeadline && (
+          <InfoItem>
+            <InfoLabel>배당요구종기</InfoLabel>
+            <InfoValue>{item.dividendDeadline}</InfoValue>
+          </InfoItem>
+        )}
       </InfoGrid>
     </Card>
   );

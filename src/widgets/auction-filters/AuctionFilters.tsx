@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import styled from 'styled-components';
-import { 
-  COURT_LIST, 
-  getDepartmentsByCourt, 
-  CITIES, 
+import {
+  COURT_LIST,
+  getDepartmentsByCourt,
+  CITIES,
   getDistrictsByCity,
   getTownsByDistrict,
-  PRICE_OPTIONS 
+  PRICE_OPTIONS
 } from '../../shared/constants';
+import type { FilterParams } from '../../entities/auction';
 
 const FilterSection = styled.div`
   background-color: #1a1a1a;
@@ -237,20 +238,20 @@ const SearchButton = styled.button`
 `;
 
 interface AuctionFiltersProps {
-  onSearch?: () => void;
+  onSearch?: (filters: FilterParams) => void;
 }
-
-// 현재 날짜에서 한 달 전 날짜를 계산하는 함수
-const getOneMonthAgoDate = (): string => {
-  const today = new Date();
-  const oneMonthAgo = new Date(today);
-  oneMonthAgo.setMonth(today.getMonth() - 1);
-  return oneMonthAgo.toISOString().split('T')[0];
-};
 
 // 현재 날짜를 YYYY-MM-DD 형식으로 반환하는 함수
 const getTodayDate = (): string => {
   return new Date().toISOString().split('T')[0];
+};
+
+// 현재 날짜에서 한 달 뒤 날짜를 계산하는 함수
+const getOneMonthLaterDate = (): string => {
+  const today = new Date();
+  const oneMonthLater = new Date(today);
+  oneMonthLater.setMonth(today.getMonth() + 1);
+  return oneMonthLater.toISOString().split('T')[0];
 };
 
 export const AuctionFilters = ({ onSearch }: AuctionFiltersProps) => {
@@ -261,8 +262,8 @@ export const AuctionFilters = ({ onSearch }: AuctionFiltersProps) => {
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [selectedTown, setSelectedTown] = useState('');
-  const [startDate, setStartDate] = useState(getOneMonthAgoDate());
-  const [endDate, setEndDate] = useState(getTodayDate());
+  const [startDate, setStartDate] = useState(getTodayDate());
+  const [endDate, setEndDate] = useState(getOneMonthLaterDate());
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [minArea, setMinArea] = useState('');
@@ -397,8 +398,8 @@ export const AuctionFilters = ({ onSearch }: AuctionFiltersProps) => {
     setSelectedCity('');
     setSelectedDistrict('');
     setSelectedTown('');
-    setStartDate(getOneMonthAgoDate());
-    setEndDate(getTodayDate());
+    setStartDate(getTodayDate());
+    setEndDate(getOneMonthLaterDate());
     setMinPrice('');
     setMaxPrice('');
     setMinArea('');
@@ -414,17 +415,74 @@ export const AuctionFilters = ({ onSearch }: AuctionFiltersProps) => {
   const handleSearch = () => {
     const isCourtMode = showCourtSelect;
     const isLocationMode = showLocationSelect;
-    const isCaseSearchInvalid =
-      isCourtMode && (!caseYear || !caseNumber || !selectedCourt);
+    // 법원 모드: 법원만 필수, 사건번호는 선택적 (연도만 입력 가능, 번호만 입력은 불가)
+    const isCourtSearchInvalid = isCourtMode && !selectedCourt;
+    const isCaseNumberInvalid = !caseYear && caseNumber; // 번호만 입력된 경우
     const isLocationSearchInvalid =
       isLocationMode && (!selectedCity || selectedCity === '');
 
-    if (dateError || priceError || areaError || isCaseSearchInvalid || isLocationSearchInvalid) {
+    if (dateError || priceError || areaError || isCourtSearchInvalid || isCaseNumberInvalid || isLocationSearchInvalid) {
       return;
     }
 
+    // 모든 필터 데이터를 FilterParams 형식으로 변환
+    const filters: FilterParams = {};
+
+    // 법원/담당계 필터
+    if (showCourtSelect && selectedCourt) {
+      filters.court = selectedCourt;
+      if (selectedDepartment) {
+        filters.department = selectedDepartment;
+      }
+    }
+
+    // 소재지 필터
+    if (showLocationSelect && selectedCity) {
+      filters.location = {
+        city: selectedCity,
+      };
+      if (selectedDistrict) {
+        filters.location.district = selectedDistrict;
+      }
+      if (selectedTown) {
+        filters.location.town = selectedTown;
+      }
+    }
+
+    // 날짜 범위 필터
+    if (startDate && endDate) {
+      filters.dateRange = {
+        start: startDate,
+        end: endDate,
+      };
+    }
+
+    // 감정평가액 범위 필터
+    if (minPrice || maxPrice) {
+      filters.priceRange = {
+        min: minPrice ? Number(minPrice) : 0,
+        max: maxPrice ? Number(maxPrice) : 0,
+      };
+    }
+
+    // 면적 범위 필터
+    if (minArea || maxArea) {
+      filters.areaRange = {
+        min: minArea ? Number(minArea) : 0,
+        max: maxArea ? Number(maxArea) : 0,
+      };
+    }
+
+    // 사건번호 필터 (연도만 입력해도 가능)
+    if (caseYear) {
+      filters.caseNumber = {
+        year: caseYear,
+        number: caseNumber || '', // 번호가 없으면 빈 문자열
+      };
+    }
+
     if (onSearch) {
-      onSearch();
+      onSearch(filters);
     }
   };
 
@@ -603,14 +661,15 @@ export const AuctionFilters = ({ onSearch }: AuctionFiltersProps) => {
         <ResetButton onClick={handleReset}>
           조건 초기화
         </ResetButton>
-        <SearchButton 
+        <SearchButton
           onClick={handleSearch}
           disabled={
             (!showCourtSelect && !showLocationSelect) ||
             !!dateError ||
             !!priceError ||
             !!areaError ||
-            (showCourtSelect && (!selectedCourt || !caseYear || !caseNumber)) ||
+            (showCourtSelect && !selectedCourt) ||
+            (!caseYear && caseNumber) ||
             (showLocationSelect && !selectedCity)
           }
         >

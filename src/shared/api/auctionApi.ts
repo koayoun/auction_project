@@ -13,8 +13,11 @@ const API_BASE_URL = import.meta.env.VITE_BIG_API_URL || 'http://127.0.0.1:8000'
 
 // 에러 처리 유틸리티
 class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  status: number;
+
+  constructor(status: number, message: string) {
     super(message);
+    this.status = status;
     this.name = 'ApiError';
   }
 }
@@ -129,7 +132,45 @@ export async function scrapeAuctions(params: BigScrapeParams = {}): Promise<{
   page: number;
   courtName: string;
 }> {
-  const response = await fetchApi<BigScrapeResponse>('/scrape', params as Record<string, string | number>);
+  // 간편한 파라미터를 Big API 형식으로 변환
+  const apiParams: Record<string, string | number> = {};
+
+  if (params.page !== undefined) {
+    apiParams.target_page = params.page;
+  } else if (params.target_page !== undefined) {
+    apiParams.target_page = params.target_page;
+  }
+
+  if (params.court) {
+    apiParams.search_court_name = params.court;
+  } else if (params.search_court_name) {
+    apiParams.search_court_name = params.search_court_name;
+  }
+
+  if (params.sido) {
+    apiParams.search_address1_01 = params.sido;
+  } else if (params.search_address1_01) {
+    apiParams.search_address1_01 = params.search_address1_01;
+  }
+
+  if (params.gu) {
+    apiParams.search_address1_02 = params.gu;
+  } else if (params.search_address1_02) {
+    apiParams.search_address1_02 = params.search_address1_02;
+  }
+
+  // 다른 파라미터들도 포함
+  if (params.search_sno) apiParams.search_sno = params.search_sno;
+  if (params.search_tno) apiParams.search_tno = params.search_tno;
+  if (params.search_ipdate1) apiParams.search_ipdate1 = params.search_ipdate1;
+  if (params.search_ipdate2) apiParams.search_ipdate2 = params.search_ipdate2;
+  if (params.search_address1_03) apiParams.search_address1_03 = params.search_address1_03;
+  if (params.search_eprice1) apiParams.search_eprice1 = params.search_eprice1;
+  if (params.search_eprice2) apiParams.search_eprice2 = params.search_eprice2;
+  if (params.search_mprice1) apiParams.search_mprice1 = params.search_mprice1;
+  if (params.search_mprice2) apiParams.search_mprice2 = params.search_mprice2;
+
+  const response = await fetchApi<BigScrapeResponse>('/scrape', apiParams);
 
   const items = response.data.map((bigItem, index) =>
     convertBigItemToAuctionItem(bigItem, index)

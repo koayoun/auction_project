@@ -46,5 +46,9 @@ export interface FilterParams {
     min: number;
     max: number;
   };
+  caseNumber?: {
+    year: string;
+    number: string;
+  };
 }
 

@@ -61,6 +61,10 @@ export interface BigGuResponse {
 
 // Big API 요청 파라미터
 export interface BigScrapeParams {
+  page?: number;  // 페이지 번호 (간편한 사용을 위해 추가)
+  court?: string;  // 법원명 (간편한 사용을 위해 추가)
+  sido?: string;   // 시/도 (간편한 사용을 위해 추가)
+  gu?: string;     // 구/군 (간편한 사용을 위해 추가)
   search_court_name?: string;
   target_page?: number;
   search_sno?: string;

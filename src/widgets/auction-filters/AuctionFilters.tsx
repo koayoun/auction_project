@@ -669,7 +669,7 @@ export const AuctionFilters = ({ onSearch }: AuctionFiltersProps) => {
             !!priceError ||
             !!areaError ||
             (showCourtSelect && !selectedCourt) ||
-            (!caseYear && caseNumber) ||
+            (!caseYear && !!caseNumber) ||
             (showLocationSelect && !selectedCity)
           }
         >

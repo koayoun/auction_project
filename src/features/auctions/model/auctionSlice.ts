@@ -26,23 +26,68 @@ const initialState: AuctionState = {
 // Async thunk for fetching auctions
 export const fetchAuctions = createAsyncThunk(
   'auctions/fetchAuctions',
-  async (params: { page: number; filters: FilterParams }, { rejectWithValue }) => {
+  async ({ page, filters }: { page: number; filters: FilterParams }, { rejectWithValue }) => {
     try {
-      const result = await scrapeAuctions({
-        page: params.page,
-        court: params.filters.court,
-        sido: params.filters.location?.city,
-        gu: params.filters.location?.district,
-      });
+      // FilterParams를 BigScrapeParams로 변환
+      const params: Record<string, string | number> = {
+        target_page: page,
+      };
+
+      // 법원 필터
+      if (filters.court) {
+        params.search_court_name = filters.court;
+      }
+
+      // 소재지 필터
+      if (filters.location) {
+        if (filters.location.city) {
+          params.search_address1_01 = filters.location.city;
+        }
+        if (filters.location.district) {
+          params.search_address1_02 = filters.location.district;
+        }
+        if (filters.location.town) {
+          params.search_address1_03 = filters.location.town;
+        }
+      }
+
+      // 날짜 범위 필터
+      if (filters.dateRange) {
+        if (filters.dateRange.start) {
+          params.search_ipdate1 = filters.dateRange.start;
+        }
+        if (filters.dateRange.end) {
+          params.search_ipdate2 = filters.dateRange.end;
+        }
+      }
+
+      // 가격 범위 필터 (최저매각가격 기준)
+      if (filters.priceRange) {
+        if (filters.priceRange.min) {
+          params.search_mprice1 = filters.priceRange.min.toString();
+        }
+        if (filters.priceRange.max) {
+          params.search_mprice2 = filters.priceRange.max.toString();
+        }
+      }
+
+      // 사건번호 필터
+      if (filters.caseNumber) {
+        const { year, number } = filters.caseNumber;
+        params.search_sno = number ? `${year}${number}` : year;
+      }
+
+      const result = await scrapeAuctions(params);
       return {
         items: result.items,
         total: result.total,
-        page: result.page,
+        page,
       };
     } catch (error) {
-      return rejectWithValue(
-        error instanceof Error ? error.message : '경매 정보를 가져오는데 실패했습니다.'
-      );
+      if (error instanceof Error) {
+        return rejectWithValue(error.message);
+      }
+      return rejectWithValue('경매 데이터를 가져오는데 실패했습니다.');
     }
   }
 );
@@ -94,7 +139,7 @@ const auctionSlice = createSlice({
       })
       .addCase(fetchAuctions.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error = action.payload as string || '경매 데이터를 가져오는데 실패했습니다.';
       });
   },
 });

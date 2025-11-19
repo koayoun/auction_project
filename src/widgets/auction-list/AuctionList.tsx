@@ -27,9 +27,10 @@ const EmptyState = styled.div`
 
 interface AuctionListProps {
   items: AuctionItem[];
+  totalCount?: number;
 }
 
-export const AuctionList = ({ items }: AuctionListProps) => {
+export const AuctionList = ({ items, totalCount }: AuctionListProps) => {
   if (items.length === 0) {
     return (
       <Container>
@@ -38,9 +39,12 @@ export const AuctionList = ({ items }: AuctionListProps) => {
     );
   }
 
+  // totalCount가 제공되지 않으면 items.length 사용
+  const displayCount = totalCount !== undefined ? totalCount : items.length;
+
   return (
     <Container>
-      <Title>경매 물건 목록 (총 {items.length}건)</Title>
+      <Title>경매 물건 목록 (총 {displayCount}건)</Title>
       <Grid>
         {items.map((item) => (
           <AuctionCard key={item.id} item={item} />

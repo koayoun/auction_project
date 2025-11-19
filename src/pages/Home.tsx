@@ -1,13 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Header } from '../widgets/layout';
 import { Footer } from '../widgets/layout';
 import { AuctionFilters } from '../widgets/auction-filters';
 import { AuctionList } from '../widgets/auction-list';
-import { Spinner } from '../shared/ui';
+import { Spinner, Pagination } from '../shared/ui';
 import { useAppSelector, useAppDispatch } from '../app/hooks';
-import { fetchAuctionsSuccess } from '../features/auctions';
-import type { AuctionItem } from '../entities/auction';
+import { fetchAuctions, updateFilters } from '../features/auctions';
+import type { FilterParams } from '../entities/auction';
 
 const Main = styled.main`
   min-height: calc(100vh - 200px);
@@ -56,83 +56,45 @@ const ContentSection = styled.section`
 `;
 
 function Home() {
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showResults, setShowResults] = useState(false);
-  
-  const dispatch = useAppDispatch();
-  const { items } = useAppSelector((state) => state.auctions);
 
-  const handleSearch = () => {
-    setIsAnalyzing(true);
+  const dispatch = useAppDispatch();
+  const { items, loading, error, totalElements, currentPage, filters } = useAppSelector((state) => state.auctions);
+
+  // 컴포넌트 마운트 시 이전 검색 결과가 있으면 표시
+  useEffect(() => {
+    if (items.length > 0) {
+      setShowResults(true);
+    }
+  }, [items.length]);
+
+  const handleSearch = async (filters: FilterParams) => {
     setShowResults(false);
 
-    // 임시 데이터 (실제로는 API 호출)
-    setTimeout(() => {
-      const mockData: AuctionItem[] = [
-        {
-          id: '1',
-          caseNumber: '2024타경12345',
-          court: '서울중앙지방법원',
-          address: '서울특별시 강남구 테헤란로 123',
-          appraisalPrice: 850000000,
-          minSalePrice: 680000000,
-          deposit: 68000000,
-          detailedAddress: '서울특별시 강남구 테헤란로 123 (역삼동, 강남빌딩) 101호',
-          dividendDeadline: '2025-11-10',
-          claimAmount: 500000000,
-          failedBidCount: 0,
-          note: '현황조사 시 임차인 1명 거주 중',
-          status: 'active',
-        },
-        {
-          id: '2',
-          caseNumber: '2024타경12346',
-          court: '서울중앙지방법원',
-          address: '서울특별시 서초구 반포대로 234',
-          appraisalPrice: 920000000,
-          minSalePrice: 736000000,
-          deposit: 73600000,
-          detailedAddress: '서울특별시 서초구 반포대로 234 (반포동) 301호',
-          dividendDeadline: '2025-11-11',
-          claimAmount: 600000000,
-          failedBidCount: 0,
-          status: 'active',
-        },
-        {
-          id: '3',
-          caseNumber: '2024타경12347',
-          court: '서울중앙지방법원',
-          address: '서울특별시 송파구 올림픽로 345',
-          appraisalPrice: 750000000,
-          minSalePrice: 600000000,
-          deposit: 60000000,
-          detailedAddress: '서울특별시 송파구 올림픽로 345 (잠실동) 1502호',
-          dividendDeadline: '2025-11-05',
-          claimAmount: 450000000,
-          failedBidCount: 1,
-          note: '선순위 전세권 설정',
-          status: 'completed',
-        },
-        {
-          id: '4',
-          caseNumber: '2024타경12348',
-          court: '서울중앙지방법원',
-          address: '서울특별시 강남구 역삼동 456',
-          appraisalPrice: 1200000000,
-          minSalePrice: 960000000,
-          deposit: 96000000,
-          detailedAddress: '서울특별시 강남구 역삼동 456 (역삼빌딩) 전층',
-          dividendDeadline: '2025-11-13',
-          claimAmount: 800000000,
-          failedBidCount: 0,
-          status: 'active',
-        },
-      ];
+    // Redux에 필터 저장
+    dispatch(updateFilters(filters));
 
-      dispatch(fetchAuctionsSuccess({ items: mockData, total: mockData.length }));
-      setIsAnalyzing(false);
+    // 필터에서 받은 데이터로 Big API 호출 (첫 페이지)
+    const result = await dispatch(fetchAuctions({
+      page: 1,
+      filters: filters
+    }));
+
+    // API 호출 성공 시 결과 표시
+    if (fetchAuctions.fulfilled.match(result)) {
       setShowResults(true);
-    }, 2000);
+    }
+  };
+
+  const handlePageChange = async (page: number) => {
+    // 페이지 변경 시 Redux에 저장된 필터로 새 페이지 데이터 로드
+    await dispatch(fetchAuctions({
+      page,
+      filters: filters
+    }));
+
+    // 페이지 맨 위로 스크롤
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -143,20 +105,37 @@ function Home() {
           <Container>
             <Title>경매 물건 자동 분석 시스템</Title>
             <Subtitle>대법원 경매정보, 실거래가, 위치분석을 한번에!</Subtitle>
-            
+
             <AuctionFilters onSearch={handleSearch} />
           </Container>
-          
-          {isAnalyzing && (
+
+          {loading && (
             <SpinnerWrapper>
-              <Spinner text="검색중..." />
+              <Spinner text="Big API에서 경매 정보를 가져오는 중..." />
             </SpinnerWrapper>
           )}
         </HeroSection>
 
         <ContentSection>
           <Container>
-            {showResults && <AuctionList items={items} />}
+            {error && (
+              <div style={{ color: 'red', textAlign: 'center', padding: '2rem' }}>
+                오류 발생: {error}
+                <br />
+                <small>Big API 서버가 실행 중인지 확인해주세요 (http://127.0.0.1:8000)</small>
+              </div>
+            )}
+            {showResults && !error && (
+              <>
+                <AuctionList items={items} totalCount={totalElements} />
+                <Pagination
+                  currentPage={currentPage}
+                  totalItems={totalElements}
+                  itemsPerPage={20}
+                  onPageChange={handlePageChange}
+                />
+              </>
+            )}
           </Container>
         </ContentSection>
       </Main>

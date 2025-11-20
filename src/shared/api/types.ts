@@ -23,6 +23,7 @@ export interface BigScrapeResponse {
   court_name: string;
   court_code: string;
   count: number;
+  total_count?: number; // 백엔드에서 아직 구현 안 된 경우 optional
   elapsed_time: string;
   search_params: {
     sno: string;
@@ -37,6 +38,15 @@ export interface BigScrapeResponse {
     eprice_range: [string, string];
     mprice_range: [string, string];
   };
+  data: BigAuctionItem[];
+}
+
+// Big API 배치 스크래핑 응답
+export interface BigBatchScrapeResponse {
+  success: boolean;
+  court_name: string;
+  pages_scraped: string;
+  total_count: number;  // ← total_count 사용
   data: BigAuctionItem[];
 }
 

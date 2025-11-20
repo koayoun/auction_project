@@ -87,7 +87,7 @@ function Home() {
   };
 
   const handlePageChange = async (page: number) => {
-    // 페이지 변경 시 Redux에 저장된 필터로 새 페이지 데이터 로드
+    // 서버에서 해당 페이지 데이터 가져오기
     await dispatch(fetchAuctions({
       page,
       filters: filters

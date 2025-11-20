@@ -5,6 +5,7 @@ import { scrapeAuctions } from '../../../shared/api/auctionApi';
 
 interface AuctionState {
   items: AuctionItem[];
+  allItems: AuctionItem[]; // batch로 가져온 전체 데이터
   selectedItem: AuctionItem | null;
   totalElements: number;
   currentPage: number;
@@ -15,6 +16,7 @@ interface AuctionState {
 
 const initialState: AuctionState = {
   items: [],
+  allItems: [],
   selectedItem: null,
   totalElements: 0,
   currentPage: 1,
@@ -23,65 +25,27 @@ const initialState: AuctionState = {
   filters: {},
 };
 
-// Async thunk for fetching auctions
+// Async thunk for fetching auctions (서버 사이드 페이지네이션)
 export const fetchAuctions = createAsyncThunk(
   'auctions/fetchAuctions',
   async ({ page, filters }: { page: number; filters: FilterParams }, { rejectWithValue }) => {
     try {
-      // FilterParams를 BigScrapeParams로 변환
-      const params: Record<string, string | number> = {
-        target_page: page,
-      };
+      const result = await scrapeAuctions({
+        page,
+        court: filters.court,
+        sido: filters.location?.city,
+        gu: filters.location?.district,
+        search_ipdate1: filters.dateRange?.start,
+        search_ipdate2: filters.dateRange?.end,
+      });
 
-      // 법원 필터
-      if (filters.court) {
-        params.search_court_name = filters.court;
-      }
+      console.log('🔍 API 응답:', result);
+      console.log('📊 받은 데이터 개수:', result.items.length);
 
-      // 소재지 필터
-      if (filters.location) {
-        if (filters.location.city) {
-          params.search_address1_01 = filters.location.city;
-        }
-        if (filters.location.district) {
-          params.search_address1_02 = filters.location.district;
-        }
-        if (filters.location.town) {
-          params.search_address1_03 = filters.location.town;
-        }
-      }
-
-      // 날짜 범위 필터
-      if (filters.dateRange) {
-        if (filters.dateRange.start) {
-          params.search_ipdate1 = filters.dateRange.start;
-        }
-        if (filters.dateRange.end) {
-          params.search_ipdate2 = filters.dateRange.end;
-        }
-      }
-
-      // 가격 범위 필터 (최저매각가격 기준)
-      if (filters.priceRange) {
-        if (filters.priceRange.min) {
-          params.search_mprice1 = filters.priceRange.min.toString();
-        }
-        if (filters.priceRange.max) {
-          params.search_mprice2 = filters.priceRange.max.toString();
-        }
-      }
-
-      // 사건번호 필터
-      if (filters.caseNumber) {
-        const { year, number } = filters.caseNumber;
-        params.search_sno = number ? `${year}${number}` : year;
-      }
-
-      const result = await scrapeAuctions(params);
       return {
         items: result.items,
         total: result.total,
-        page,
+        page: result.page,
       };
     } catch (error) {
       if (error instanceof Error) {
@@ -127,11 +91,17 @@ const auctionSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // fetchAuctions (서버 사이드 페이지네이션)
       .addCase(fetchAuctions.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchAuctions.fulfilled, (state, action) => {
+        console.log('✅ Redux: fetchAuctions.fulfilled', action.payload);
+        console.log('✅ Redux: total =', action.payload.total);
+        console.log('✅ Redux: page =', action.payload.page);
+        console.log('✅ Redux: items length =', action.payload.items.length);
+
         state.loading = false;
         state.items = action.payload.items;
         state.totalElements = action.payload.total;

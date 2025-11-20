@@ -35,7 +35,7 @@ FROM node:22-alpine
 WORKDIR /app
 
 # wget 설치 (헬스체크용)
-RUN apk add --no-cache wget
+RUN apk add --no-cache wget curl
 
 # 보안: non-root 사용자로 실행
 RUN addgroup -g 1001 -S nodejs && \

@@ -12,7 +12,7 @@ import type {
 
 //const API_BASE_URL = import.meta.env.VITE_BIG_API_URL || 'http://127.0.0.1:8000';
 //const API_BASE_URL = import.meta.env.VITE_BIG_API_URL || 'http://backend-app-service.bdc105.svc.cluster.local:8000';
-const API_BASE_URL = import.meta.env.VITE_BIG_API_URL || '/api';
+const API_BASE_URL = import.meta.env.VITE_BIG_API_URL || 'https://backend.bdc105.kro.kr';
 
 // 에러 처리 유틸리티
 class ApiError extends Error {

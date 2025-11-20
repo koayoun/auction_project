@@ -1,3 +1,3 @@
-export { default as auctionReducer, changePage } from './auctionSlice';
+export { default as auctionReducer } from './auctionSlice';
 export * from './auctionSlice';
 

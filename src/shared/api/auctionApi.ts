@@ -173,19 +173,25 @@ export async function scrapeAuctions(params: BigScrapeParams = {}): Promise<{
 
   const response = await fetchApi<BigScrapeResponse>('/scrape', apiParams);
 
+  console.log('📡 /scrape API 응답:', response);
+  console.log('📊 total_count:', response.total_count);
+  console.log('📄 page:', response.page);
+  console.log('📦 count:', response.count);
+
   const items = response.data.map((bigItem, index) =>
     convertBigItemToAuctionItem(bigItem, index)
   );
 
-  // 페이지네이션을 위해 전체 개수 추정
-  // 현재 페이지에 20개가 있으면 더 많은 페이지가 있을 가능성이 높음
-  const estimatedTotal = response.count === 20
-    ? response.page * 20 + 100  // 최소 5페이지 이상 있다고 가정
-    : (response.page - 1) * 20 + response.count;
+  // total_count가 없으면 추정치 사용 (백엔드 수정 전까지 임시 처리)
+  const totalCount = response.total_count !== undefined
+    ? response.total_count
+    : (response.count === 20 ? response.page * 20 + 100 : (response.page - 1) * 20 + response.count);
+
+  console.log('🎯 사용할 total:', totalCount);
 
   return {
     items,
-    total: estimatedTotal,
+    total: totalCount,
     page: response.page,
     courtName: response.court_name,
   };

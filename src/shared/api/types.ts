@@ -23,6 +23,7 @@ export interface BigScrapeResponse {
   court_name: string;
   court_code: string;
   count: number;
+  total_count?: number; // 백엔드에서 아직 구현 안 된 경우 optional
   elapsed_time: string;
   search_params: {
     sno: string;

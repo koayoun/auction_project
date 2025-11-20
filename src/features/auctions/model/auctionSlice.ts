@@ -25,7 +25,7 @@ const initialState: AuctionState = {
   filters: {},
 };
 
-// Async thunk for fetching auctions (단일 페이지 사용)
+// Async thunk for fetching auctions (서버 사이드 페이지네이션)
 export const fetchAuctions = createAsyncThunk(
   'auctions/fetchAuctions',
   async ({ page, filters }: { page: number; filters: FilterParams }, { rejectWithValue }) => {
@@ -53,26 +53,6 @@ export const fetchAuctions = createAsyncThunk(
       }
       return rejectWithValue('경매 데이터를 가져오는데 실패했습니다.');
     }
-  }
-);
-
-// 페이지 변경 액션 (이미 가져온 데이터에서 페이지만 변경)
-export const changePage = createAsyncThunk(
-  'auctions/changePage',
-  async (page: number, { getState }) => {
-    const state = getState() as { auctions: AuctionState };
-    const { allItems } = state.auctions;
-
-    // 클라이언트 사이드 페이지네이션
-    const itemsPerPage = 20;
-    const startIndex = (page - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const pageItems = allItems.slice(startIndex, endIndex);
-
-    return {
-      items: pageItems,
-      page,
-    };
   }
 );
 
@@ -111,12 +91,17 @@ const auctionSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // fetchAuctions (batch)
+      // fetchAuctions (서버 사이드 페이지네이션)
       .addCase(fetchAuctions.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchAuctions.fulfilled, (state, action) => {
+        console.log('✅ Redux: fetchAuctions.fulfilled', action.payload);
+        console.log('✅ Redux: total =', action.payload.total);
+        console.log('✅ Redux: page =', action.payload.page);
+        console.log('✅ Redux: items length =', action.payload.items.length);
+
         state.loading = false;
         state.items = action.payload.items;
         state.totalElements = action.payload.total;
@@ -125,11 +110,6 @@ const auctionSlice = createSlice({
       .addCase(fetchAuctions.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string || '경매 데이터를 가져오는데 실패했습니다.';
-      })
-      // changePage (클라이언트 사이드 페이지네이션)
-      .addCase(changePage.fulfilled, (state, action) => {
-        state.items = action.payload.items;
-        state.currentPage = action.payload.page;
       });
   },
 });

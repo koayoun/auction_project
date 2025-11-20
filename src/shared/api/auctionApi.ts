@@ -55,6 +55,16 @@ async function fetchApi<T>(endpoint: string, params?: Record<string, string | nu
 
 // Big API 응답을 프론트엔드 AuctionItem 타입으로 변환
 export function convertBigItemToAuctionItem(bigItem: BigAuctionItem, index: number): AuctionItem {
+  // 첫 번째 아이템만 로깅 (너무 많은 로그 방지)
+  if (index === 0) {
+    console.log('🔍 API 원본 데이터 샘플:', {
+      청구금액: bigItem.청구금액,
+      배당요구종기: bigItem.배당요구종기,
+      유찰횟수: bigItem.유찰횟수,
+      비고: bigItem.비고,
+    });
+  }
+
   // 가격 문자열에서 숫자만 추출 (예: "1억 2,000만원" -> 120000000)
   const parsePrice = (priceStr: string): number => {
     // 모든 공백과 특수문자 제거
@@ -108,6 +118,23 @@ export function convertBigItemToAuctionItem(bigItem: BigAuctionItem, index: numb
     return parsePrice(amountStr);
   };
 
+  const claimAmount = parseClaimAmount(bigItem.청구금액);
+  const failedBidCount = parseFailedBidCount(bigItem.유찰횟수);
+
+  // 첫 번째 아이템만 파싱 결과 로깅
+  if (index === 0) {
+    console.log('✅ 파싱 결과:', {
+      청구금액원본: bigItem.청구금액,
+      청구금액파싱: claimAmount,
+      배당요구종기원본: bigItem.배당요구종기,
+      배당요구종기결과: bigItem.배당요구종기 || undefined,
+      유찰횟수원본: bigItem.유찰횟수,
+      유찰횟수파싱: failedBidCount,
+      비고원본: bigItem.비고,
+      비고결과: bigItem.비고 || undefined,
+    });
+  }
+
   return {
     id,
     caseNumber: bigItem.사건번호,
@@ -119,8 +146,8 @@ export function convertBigItemToAuctionItem(bigItem: BigAuctionItem, index: numb
     detailedAddress: bigItem.물건기본내역,
     bidStartDate: bigItem.매각기일, // 매각기일을 입찰 시작일로 사용
     dividendDeadline: bigItem.배당요구종기 || undefined,
-    claimAmount: parseClaimAmount(bigItem.청구금액),
-    failedBidCount: parseFailedBidCount(bigItem.유찰횟수),
+    claimAmount: claimAmount,
+    failedBidCount: failedBidCount,
     note: bigItem.비고 || undefined,
     status: 'active', // Big API는 진행 중인 물건만 제공
   };

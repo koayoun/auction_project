@@ -16,10 +16,6 @@ metadata:
     # 헤더 설정 (Proxmox 환경 등에서 유용)
     nginx.ingress.kubernetes.io/use-forwarded-headers: "true"
 
-    # Backend API rewrite 설정 (/api/scrape → /scrape)
-    nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
-
     # 선택: IP 화이트리스트 (필요시 주석 해제)
     # nginx.ingress.kubernetes.io/whitelist-source-range: "182.213.11.0/24,211.44.192.110"
 
@@ -37,9 +33,9 @@ spec:
   - host: www.bdc105.kro.kr
     http:
       paths:
-      # Backend API 라우팅 (/api/scrape → /scrape)
-      - path: /api(/|$)(.*)
-        pathType: ImplementationSpecific
+      # Backend API 라우팅 (/api/*)
+      - path: /api
+        pathType: Prefix
         backend:
           service:
             name: backend-app-service
@@ -47,8 +43,8 @@ spec:
               number: 8000
 
       # Frontend 라우팅 (나머지 모든 경로)
-      - path: /()(.*)
-        pathType: ImplementationSpecific
+      - path: /
+        pathType: Prefix
         backend:
           service:
             name: front-app-service  # ClusterIP Service 이름

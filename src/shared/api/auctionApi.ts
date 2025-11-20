@@ -1,6 +1,7 @@
 import type { AuctionItem } from '../../entities/auction';
 import type {
   BigScrapeResponse,
+  BigBatchScrapeResponse,
   BigCourtsResponse,
   BigSidoResponse,
   BigGuResponse,
@@ -176,9 +177,15 @@ export async function scrapeAuctions(params: BigScrapeParams = {}): Promise<{
     convertBigItemToAuctionItem(bigItem, index)
   );
 
+  // 페이지네이션을 위해 전체 개수 추정
+  // 현재 페이지에 20개가 있으면 더 많은 페이지가 있을 가능성이 높음
+  const estimatedTotal = response.count === 20
+    ? response.page * 20 + 100  // 최소 5페이지 이상 있다고 가정
+    : (response.page - 1) * 20 + response.count;
+
   return {
     items,
-    total: response.count,
+    total: estimatedTotal,
     page: response.page,
     courtName: response.court_name,
   };
@@ -189,7 +196,11 @@ export async function scrapeBatchAuctions(params: BigBatchScrapeParams = {}): Pr
   items: AuctionItem[];
   total: number;
 }> {
-  const response = await fetchApi<BigScrapeResponse>('/scrape/batch', params as Record<string, string | number>);
+  const response = await fetchApi<BigBatchScrapeResponse>('/scrape/batch', params as Record<string, string | number>);
+
+  console.log('🌐 API Raw Response:', response);
+  console.log('📦 Raw data count:', response.data?.length);
+  console.log('🔢 Total count:', response.total_count);
 
   const items = response.data.map((bigItem, index) =>
     convertBigItemToAuctionItem(bigItem, index)
@@ -197,7 +208,7 @@ export async function scrapeBatchAuctions(params: BigBatchScrapeParams = {}): Pr
 
   return {
     items,
-    total: response.count,
+    total: response.total_count || items.length,  // total_count가 없으면 items 길이 사용
   };
 }
 

@@ -40,6 +40,15 @@ export interface BigScrapeResponse {
   data: BigAuctionItem[];
 }
 
+// Big API 배치 스크래핑 응답
+export interface BigBatchScrapeResponse {
+  success: boolean;
+  court_name: string;
+  pages_scraped: string;
+  total_count: number;  // ← total_count 사용
+  data: BigAuctionItem[];
+}
+
 // Big API 법원 목록 응답
 export interface BigCourtsResponse {
   count: number;

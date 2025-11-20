@@ -5,6 +5,7 @@ import { scrapeAuctions } from '../../../shared/api/auctionApi';
 
 interface AuctionState {
   items: AuctionItem[];
+  allItems: AuctionItem[]; // batch로 가져온 전체 데이터
   selectedItem: AuctionItem | null;
   totalElements: number;
   currentPage: number;
@@ -15,6 +16,7 @@ interface AuctionState {
 
 const initialState: AuctionState = {
   items: [],
+  allItems: [],
   selectedItem: null,
   totalElements: 0,
   currentPage: 1,
@@ -23,65 +25,27 @@ const initialState: AuctionState = {
   filters: {},
 };
 
-// Async thunk for fetching auctions
+// Async thunk for fetching auctions (단일 페이지 사용)
 export const fetchAuctions = createAsyncThunk(
   'auctions/fetchAuctions',
   async ({ page, filters }: { page: number; filters: FilterParams }, { rejectWithValue }) => {
     try {
-      // FilterParams를 BigScrapeParams로 변환
-      const params: Record<string, string | number> = {
-        target_page: page,
-      };
+      const result = await scrapeAuctions({
+        page,
+        court: filters.court,
+        sido: filters.location?.city,
+        gu: filters.location?.district,
+        search_ipdate1: filters.dateRange?.start,
+        search_ipdate2: filters.dateRange?.end,
+      });
 
-      // 법원 필터
-      if (filters.court) {
-        params.search_court_name = filters.court;
-      }
+      console.log('🔍 API 응답:', result);
+      console.log('📊 받은 데이터 개수:', result.items.length);
 
-      // 소재지 필터
-      if (filters.location) {
-        if (filters.location.city) {
-          params.search_address1_01 = filters.location.city;
-        }
-        if (filters.location.district) {
-          params.search_address1_02 = filters.location.district;
-        }
-        if (filters.location.town) {
-          params.search_address1_03 = filters.location.town;
-        }
-      }
-
-      // 날짜 범위 필터
-      if (filters.dateRange) {
-        if (filters.dateRange.start) {
-          params.search_ipdate1 = filters.dateRange.start;
-        }
-        if (filters.dateRange.end) {
-          params.search_ipdate2 = filters.dateRange.end;
-        }
-      }
-
-      // 가격 범위 필터 (최저매각가격 기준)
-      if (filters.priceRange) {
-        if (filters.priceRange.min) {
-          params.search_mprice1 = filters.priceRange.min.toString();
-        }
-        if (filters.priceRange.max) {
-          params.search_mprice2 = filters.priceRange.max.toString();
-        }
-      }
-
-      // 사건번호 필터
-      if (filters.caseNumber) {
-        const { year, number } = filters.caseNumber;
-        params.search_sno = number ? `${year}${number}` : year;
-      }
-
-      const result = await scrapeAuctions(params);
       return {
         items: result.items,
         total: result.total,
-        page,
+        page: result.page,
       };
     } catch (error) {
       if (error instanceof Error) {
@@ -89,6 +53,26 @@ export const fetchAuctions = createAsyncThunk(
       }
       return rejectWithValue('경매 데이터를 가져오는데 실패했습니다.');
     }
+  }
+);
+
+// 페이지 변경 액션 (이미 가져온 데이터에서 페이지만 변경)
+export const changePage = createAsyncThunk(
+  'auctions/changePage',
+  async (page: number, { getState }) => {
+    const state = getState() as { auctions: AuctionState };
+    const { allItems } = state.auctions;
+
+    // 클라이언트 사이드 페이지네이션
+    const itemsPerPage = 20;
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const pageItems = allItems.slice(startIndex, endIndex);
+
+    return {
+      items: pageItems,
+      page,
+    };
   }
 );
 
@@ -127,6 +111,7 @@ const auctionSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // fetchAuctions (batch)
       .addCase(fetchAuctions.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -140,6 +125,11 @@ const auctionSlice = createSlice({
       .addCase(fetchAuctions.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string || '경매 데이터를 가져오는데 실패했습니다.';
+      })
+      // changePage (클라이언트 사이드 페이지네이션)
+      .addCase(changePage.fulfilled, (state, action) => {
+        state.items = action.payload.items;
+        state.currentPage = action.payload.page;
       });
   },
 });

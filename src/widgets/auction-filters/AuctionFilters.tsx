@@ -5,7 +5,6 @@ import {
   getDepartmentsByCourt,
   CITIES,
   getDistrictsByCity,
-  getTownsByDistrict,
   PRICE_OPTIONS
 } from '../../shared/constants';
 import type { FilterParams } from '../../entities/auction';
@@ -261,7 +260,6 @@ export const AuctionFilters = ({ onSearch }: AuctionFiltersProps) => {
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
-  const [selectedTown, setSelectedTown] = useState('');
   const [startDate, setStartDate] = useState(getTodayDate());
   const [endDate, setEndDate] = useState(getOneMonthLaterDate());
   const [minPrice, setMinPrice] = useState('');
@@ -342,7 +340,6 @@ export const AuctionFilters = ({ onSearch }: AuctionFiltersProps) => {
       setShowLocationSelect(false);
       setSelectedCity('');
       setSelectedDistrict('');
-      setSelectedTown('');
     } else {
       setSelectedCourt('');
       setSelectedDepartment('');
@@ -370,24 +367,20 @@ export const AuctionFilters = ({ onSearch }: AuctionFiltersProps) => {
     } else {
       setSelectedCity('');
       setSelectedDistrict('');
-      setSelectedTown('');
     }
   };
 
   const handleCityChange = (city: string) => {
     setSelectedCity(city);
     setSelectedDistrict(''); // 시/도 변경 시 구 초기화
-    setSelectedTown('');     // 동도 초기화
   };
 
   const handleDistrictChange = (district: string) => {
     setSelectedDistrict(district);
-    setSelectedTown(''); // 구 변경 시 동 초기화
   };
 
   const availableDepartments = selectedCourt ? getDepartmentsByCourt(selectedCourt) : [];
   const availableDistricts = selectedCity ? getDistrictsByCity(selectedCity) : [];
-  const availableTowns = selectedDistrict ? getTownsByDistrict(selectedDistrict) : [];
 
   const handleReset = () => {
     // 모든 필터 초기화
@@ -397,7 +390,6 @@ export const AuctionFilters = ({ onSearch }: AuctionFiltersProps) => {
     setSelectedDepartment('');
     setSelectedCity('');
     setSelectedDistrict('');
-    setSelectedTown('');
     setStartDate(getTodayDate());
     setEndDate(getOneMonthLaterDate());
     setMinPrice('');
@@ -443,9 +435,6 @@ export const AuctionFilters = ({ onSearch }: AuctionFiltersProps) => {
       };
       if (selectedDistrict) {
         filters.location.district = selectedDistrict;
-      }
-      if (selectedTown) {
-        filters.location.town = selectedTown;
       }
     }
 
@@ -552,18 +541,6 @@ export const AuctionFilters = ({ onSearch }: AuctionFiltersProps) => {
               {availableDistricts.map((district) => (
                 <option key={district} value={district}>
                   {district}
-                </option>
-              ))}
-            </Select>
-            <Select 
-              value={selectedTown} 
-              onChange={(e) => setSelectedTown(e.target.value)}
-              disabled={!selectedDistrict}
-            >
-              <option value="">읍/면/동 선택 (선택)</option>
-              {availableTowns.map((town) => (
-                <option key={town} value={town}>
-                  {town}
                 </option>
               ))}
             </Select>

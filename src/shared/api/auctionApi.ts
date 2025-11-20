@@ -27,7 +27,9 @@ class ApiError extends Error {
 
 // HTTP 요청 유틸리티
 async function fetchApi<T>(endpoint: string, params?: Record<string, string | number>): Promise<T> {
-  const url = new URL(endpoint, API_BASE_URL);
+  // API_BASE_URL과 endpoint를 합쳐서 URL 생성
+  const fullPath = `${API_BASE_URL}${endpoint}`;
+  const url = new URL(fullPath, window.location.origin);
 
   // 파라미터가 있으면 쿼리스트링 추가
   if (params) {

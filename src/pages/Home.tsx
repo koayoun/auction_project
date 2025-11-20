@@ -122,7 +122,7 @@ function Home() {
               <div style={{ color: 'red', textAlign: 'center', padding: '2rem' }}>
                 오류 발생: {error}
                 <br />
-                <small>Big API 서버가 실행 중인지 확인해주세요 (http://127.0.0.1:8000)</small>
+                <small>API 서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.</small>
               </div>
             )}
             {showResults && !error && (

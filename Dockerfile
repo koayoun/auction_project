@@ -21,6 +21,12 @@ RUN npm ci --prefer-offline --no-audit
 # 소스 코드 복사
 COPY . .
 
+# 빌드 시 환경 변수 주입 (ARG로 받아서 ENV로 설정)
+ARG VITE_ANTHROPIC_API_KEY
+ARG VITE_ANTHROPIC_MODEL=claude-sonnet-4-5-20250929
+ENV VITE_ANTHROPIC_API_KEY=${VITE_ANTHROPIC_API_KEY}
+ENV VITE_ANTHROPIC_MODEL=${VITE_ANTHROPIC_MODEL}
+
 # 빌드 실행
 RUN npm run build
 

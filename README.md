@@ -41,6 +41,23 @@ cd auction_project
 npm install
 ```
 
+### 3. 환경 변수 설정
+
+`.env.example` 파일을 참고하여 `.env` 파일을 생성하고 API 키를 설정하세요.
+
+```bash
+cp .env.example .env
+```
+
+`.env` 파일을 열어서 다음 값을 설정하세요:
+
+```env
+VITE_ANTHROPIC_API_KEY=your_api_key_here
+VITE_ANTHROPIC_MODEL=claude-sonnet-4-5-20250929
+```
+
+**⚠️ 중요**: `.env` 파일은 Git에 커밋되지 않습니다. 각 개발자는 자신의 API 키를 설정해야 합니다.
+
 ## 🚀 실행 방법
 
 ### 개발 서버 실행

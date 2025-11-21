@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { marked } from 'marked';
 import { 
   getScoreGradeAndComment,
   formatPriceDetail,
@@ -10,6 +11,8 @@ import {
   type PropertyStatus,
   type RightAnalysisResult
 } from '../../shared/constants';
+import { OpenAiService } from '../../shared/api/claudeApi';
+import type { AuctionItem } from '../../entities/auction';
 
 const Container = styled.div`
   background: #1a1a1a;
@@ -320,11 +323,95 @@ const TwoColumnLayout = styled.div`
 
 type TabType = '종합' | '가격분석' | '위험분석';
 
-export const AnalysisDashboard = () => {
+interface AnalysisDashboardProps {
+  item: AuctionItem;
+}
+
+interface AIAnalysisResult {
+  investmentValue: string;
+  riskAnalysis: string;
+  locationAnalysis: string;
+  overallOpinion: string;
+  investmentRating: string;
+}
+
+export const AnalysisDashboard = ({ item }: AnalysisDashboardProps) => {
   const [activeTab, setActiveTab] = useState<TabType>('종합');
+  const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisResult | null>(null);
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  // 마크다운을 HTML로 변환하는 함수
+  const markdownToHtml = (markdown: string): string => {
+    if (!markdown) return '';
+    try {
+      // marked는 동기적으로도 사용 가능하지만, 타입 안정성을 위해 명시적으로 처리
+      const html = marked.parse(markdown, { breaks: true });
+      return typeof html === 'string' ? html : String(html);
+    } catch (error) {
+      console.error('마크다운 변환 실패:', error);
+      return markdown;
+    }
+  };
+
+  // Claude API 호출
+  useEffect(() => {
+    const fetchAIAnalysis = async () => {
+      setIsLoadingAI(true);
+      setAiError(null);
+
+      try {
+        // 점수 계산 (실제 점수 - 임시로 하드코딩, 나중에 실제 계산 로직으로 대체)
+        const priceActualScore = 34;
+        const riskActualScore = 49;
+        const totalScore = priceActualScore + riskActualScore;
+
+        // 가격 데이터
+        const appraisalPrice = item.appraisalPrice;
+        const minSalePrice = item.minSalePrice;
+        const estimatedMarketPrice = Math.round(appraisalPrice * 1.1); // 임시: 감정가의 110%로 추정
+        const locationImportance: '높음' | '보통' | '낮음' = '높음'; // 임시
+        
+        // 가격 분석 계산
+        const appraisalRatio = calculateAppraisalRatio(minSalePrice, appraisalPrice);
+        const priceDifference = calculatePriceDifference(estimatedMarketPrice, minSalePrice);
+
+        // 위험 요소 데이터 (임시)
+        const rightAnalysisResult: RightAnalysisResult = '양호';
+        const propertyStatus: PropertyStatus = '관리 양호';
+
+        const analysisData = {
+          priceScore: priceActualScore,
+          riskScore: riskActualScore,
+          totalScore,
+          appraisalPrice,
+          minSalePrice,
+          estimatedMarketPrice,
+          appraisalRatio,
+          priceDifference,
+          locationImportance,
+          propertyStatus,
+          rightAnalysisResult,
+          dividendDeadline: item.dividendDeadline,
+        };
+
+        const result = await OpenAiService.analyzeAuctionItem(item, analysisData);
+        setAiAnalysis(result);
+      } catch (error) {
+        console.error('AI 분석 실패:', error);
+        setAiError(error instanceof Error ? error.message : 'AI 분석을 불러오는데 실패했습니다.');
+      } finally {
+        setIsLoadingAI(false);
+      }
+    };
+
+    if (item) {
+      fetchAIAnalysis();
+    }
+  }, [item]);
 
   const renderOverview = () => {
-    // 점수 계산 (실제 점수)
+    // 점수 계산 (실제 점수 - 임시로 하드코딩)
     const PRICE_MAX_SCORE = 55; // 가격 매력도 만점
     const RISK_MAX_SCORE = 30; // 권리 위험도 만점
     
@@ -338,20 +425,20 @@ export const AnalysisDashboard = () => {
     // 종합 투자 점수 (실제 점수 합계)
     const totalScore = priceActualScore + riskActualScore;
 
-    // 가격 데이터
-    const appraisalPrice = 850000000; // 감정가
-    const minSalePrice = 680000000; // 최저가
-    const estimatedMarketPrice = 950000000; // 추정 시세
-    const locationImportance: '높음' | '보통' | '낮음' = '높음'; // 소재지 중요도
+    // 가격 데이터 (실제 데이터 사용)
+    const appraisalPrice = item.appraisalPrice;
+    const minSalePrice = item.minSalePrice;
+    const estimatedMarketPrice = Math.round(appraisalPrice * 1.1); // 임시: 감정가의 110%로 추정
+    const locationImportance: '높음' | '보통' | '낮음' = '높음'; // 임시
     
     // 가격 분석 계산
     const appraisalRatio = calculateAppraisalRatio(minSalePrice, appraisalPrice);
     const priceDifference = calculatePriceDifference(estimatedMarketPrice, minSalePrice);
 
-    // 위험 요소 데이터
-    const rightAnalysisResult: RightAnalysisResult = '양호'; // 권리 분석 결과
-    const propertyStatus: PropertyStatus = '관리 양호'; // 물건 상태
-    const dividendDeadline = '2025-03-15'; // 배당요구종기
+    // 위험 요소 데이터 (임시)
+    const rightAnalysisResult: RightAnalysisResult = '양호';
+    const propertyStatus: PropertyStatus = '관리 양호';
+    const dividendDeadline = item.dividendDeadline || undefined;
 
     // 등급과 코멘트 계산
     const { grade, comment } = getScoreGradeAndComment(totalScore);
@@ -457,45 +544,42 @@ export const AnalysisDashboard = () => {
           🤖 AI 종합 분석
         </AITitle>
         <AIContent>
-          <AISection>
-            <AISectionTitle>📊 투자 가치 평가</AISectionTitle>
-            <AIText>
-              본 물건은 <strong style={{ color: '#52c41a' }}>감정가 대비 20% 낮은 최저 매각가</strong>로 시작하며, 
-              주변 실거래가를 분석한 결과 약 <strong style={{ color: '#52c41a' }}>9억 5천만원 수준</strong>의 
-              시장가치를 가지고 있는 것으로 평가됩니다. 이는 약 <strong style={{ color: '#52c41a' }}>40%의 잠재 수익률</strong>을 
-              의미합니다.
-            </AIText>
-          </AISection>
+          {isLoadingAI && (
+            <div style={{ textAlign: 'center', padding: '2rem', color: '#999999' }}>
+              AI가 분석 중입니다...
+            </div>
+          )}
+          {aiError && (
+            <div style={{ textAlign: 'center', padding: '2rem', color: '#f5222d' }}>
+              {aiError}
+            </div>
+          )}
+          {!isLoadingAI && !aiError && aiAnalysis && (
+            <>
+              <AISection>
+                <AISectionTitle>📊 투자 가치 평가</AISectionTitle>
+                <AIText dangerouslySetInnerHTML={{ __html: markdownToHtml(aiAnalysis.investmentValue) }} />
+              </AISection>
 
-          <AISection>
-            <AISectionTitle>⚠️ 리스크 분석</AISectionTitle>
-            <AIText>
-              현재 <strong style={{ color: '#faad14' }}>임차인 1명이 거주 중</strong>이며 보증금은 5천만원입니다. 
-              근저당권 및 전세권 설정이 없어 권리관계가 단순한 편입니다. 
-              다만 임차인 문제 해결에 <strong style={{ color: '#faad14' }}>3~6개월 정도 소요</strong>될 수 있습니다.
-            </AIText>
-          </AISection>
+              <AISection>
+                <AISectionTitle>⚠️ 리스크 분석</AISectionTitle>
+                <AIText dangerouslySetInnerHTML={{ __html: markdownToHtml(aiAnalysis.riskAnalysis) }} />
+              </AISection>
 
-          <AISection>
-            <AISectionTitle>📍 입지 분석</AISectionTitle>
-            <AIText>
-              역삼역 도보 5분 거리로 <strong style={{ color: '#52c41a' }}>교통 접근성이 뛰어나며</strong>, 
-              강남구 테헤란로에 위치하여 업무/상업 환경이 우수합니다. 
-              초등학교 및 편의시설도 가까워 <strong style={{ color: '#52c41a' }}>실거주 및 임대 수요가 높은 지역</strong>입니다.
-            </AIText>
-          </AISection>
+              <AISection>
+                <AISectionTitle>📍 입지 분석</AISectionTitle>
+                <AIText dangerouslySetInnerHTML={{ __html: markdownToHtml(aiAnalysis.locationAnalysis) }} />
+              </AISection>
 
-          <AISection>
-            <AISectionTitle>✅ 종합 의견</AISectionTitle>
-            <AIText style={{ fontSize: '16px', fontWeight: '600', color: '#ffffff' }}>
-              투자 매력도: <HighlightValue $positive={true}>★★★★★ (5/5)</HighlightValue>
-            </AIText>
-            <AIText>
-              입지가 우수하고 가격 경쟁력이 높아 <strong style={{ color: '#52c41a' }}>적극 추천</strong>합니다. 
-              임차인 문제만 원만히 해결한다면 안정적인 수익을 기대할 수 있습니다. 
-              유찰 이력이 없어 경쟁이 있을 것으로 예상되니 충분한 보증금 준비가 필요합니다.
-            </AIText>
-          </AISection>
+              <AISection>
+                <AISectionTitle>✅ 종합 의견</AISectionTitle>
+                <AIText style={{ fontSize: '16px', fontWeight: '600', color: '#ffffff' }}>
+                  투자 매력도: <HighlightValue $positive={true}>{aiAnalysis.investmentRating}</HighlightValue>
+                </AIText>
+                <AIText dangerouslySetInnerHTML={{ __html: markdownToHtml(aiAnalysis.overallOpinion) }} />
+              </AISection>
+            </>
+          )}
         </AIContent>
       </AIAnalysisSection>
       </TabContent>
@@ -503,9 +587,9 @@ export const AnalysisDashboard = () => {
   };
 
   const renderPriceAnalysis = () => {
-    // 가격 데이터
-    const appraisalPrice = 850000000; // 감정가
-    const minSalePrice = 680000000; // 최저가
+    // 가격 데이터 (실제 데이터 사용)
+    const appraisalPrice = item.appraisalPrice;
+    const minSalePrice = item.minSalePrice;
     const priceActualScore = 34; // 가격 매력도 실제 점수 (55점 만점)
 
     return (
@@ -587,10 +671,10 @@ export const AnalysisDashboard = () => {
     // 위험 분석 점수
     const riskActualScore = 49; // 권리 위험도 실제 점수 (30점 만점)
 
-    // 위험 분석 데이터
+    // 위험 분석 데이터 (실제 데이터 사용)
     const propertyNoteScore = 8; // 물건비고 스코어링 (예시)
     const propertyStatus: PropertyStatus = '관리 양호'; // 물건 상태
-    const dividendDeadline = '2025-03-15'; // 배당요구종기
+    const dividendDeadline = item.dividendDeadline || undefined;
 
     // 점수에 따른 평가 결정 함수 (점수가 높을수록 안전)
     const getEvaluation = (score: number, maxScore: number): '안전' | '주의' | '위험' => {

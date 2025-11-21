@@ -133,7 +133,7 @@ function Dashboard() {
           </BackButton>
 
           {/* 상단: 물건 상세 정보 */}
-          <SectionTitle></SectionTitle>
+          <SectionTitle>물건 상세 정보</SectionTitle>
           <PropertyDetail item={selectedItem} />
 
           <Divider />
@@ -159,7 +159,7 @@ function Dashboard() {
             </AnalysisSection>
           )}
 
-          {showAnalysis && <AnalysisDashboard />}
+          {showAnalysis && selectedItem && <AnalysisDashboard item={selectedItem} />}
         </Container>
       </Main>
       <Footer />

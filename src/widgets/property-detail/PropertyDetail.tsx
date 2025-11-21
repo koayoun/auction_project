@@ -141,18 +141,8 @@ export const PropertyDetail = ({ item }: PropertyDetailProps) => {
         </InfoRow>
 
         <InfoRow>
-          <InfoLabel>청구금액</InfoLabel>
-          <InfoValue>{item.claimAmount ? formatPrice(item.claimAmount) : '없음'}</InfoValue>
-        </InfoRow>
-
-        <InfoRow>
           <InfoLabel>배당요구종기</InfoLabel>
           <InfoValue>{item.dividendDeadline || '없음'}</InfoValue>
-        </InfoRow>
-
-        <InfoRow>
-          <InfoLabel>유찰 횟수</InfoLabel>
-          <InfoValue>{item.failedBidCount !== undefined ? `${item.failedBidCount}회` : '없음'}</InfoValue>
         </InfoRow>
 
         <InfoRow>

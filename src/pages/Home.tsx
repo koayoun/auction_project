@@ -80,9 +80,11 @@ function Home() {
       filters: filters
     }));
 
-    // API 호출 성공 시 결과 표시
+    // API 호출 성공 시 결과 표시 및 맨 위로 스크롤
     if (fetchAuctions.fulfilled.match(result)) {
       setShowResults(true);
+      // 검색 시에만 맨 위로 스크롤
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -93,8 +95,7 @@ function Home() {
       filters: filters
     }));
 
-    // 페이지 맨 위로 스크롤
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // 페이지 변경 시에는 스크롤하지 않음 (현재 위치 유지)
   };
 
   return (

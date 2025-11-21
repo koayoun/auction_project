@@ -133,7 +133,7 @@ function Dashboard() {
           </BackButton>
 
           {/* 상단: 물건 상세 정보 */}
-          <SectionTitle>물건 상세 정보</SectionTitle>
+          <SectionTitle></SectionTitle>
           <PropertyDetail item={selectedItem} />
 
           <Divider />

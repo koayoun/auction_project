@@ -99,3 +99,33 @@ export interface BigBatchScrapeParams {
   search_ipdate2?: string;
   delay?: number;
 }
+
+// Analysis API 요청 타입
+export interface AnalysisRequest {
+  감정가: number;
+  최저가: number;
+  평: number;
+  청구금액: number;
+  유찰횟수: number;
+  소재지: string;
+  배당요구종기: string;
+  물건비고: string;
+  물건상태: string;
+}
+
+// Analysis API 응답 타입
+export interface AnalysisResult {
+  '감정가대비_할인율(%)': number;
+  '감정가대비_할인율_점수': number;
+  '추정시세_원': number | null;
+  '시세대비_할인율(%)': number | null;
+  '시세대비_할인율_점수': number;
+  '소재지_점수': number;
+  '배당요구종기_점수': number;
+  '물건비고_점수': number;
+  '물건상태_점수': number;
+  '총점': number;
+  '등급': string;
+  '누락항목': string[];
+  error: boolean;
+}

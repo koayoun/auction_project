@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { marked } from 'marked';
-import { 
+import {
   getScoreGradeAndComment,
   formatPriceDetail,
   calculateAppraisalRatio,
@@ -12,6 +12,8 @@ import {
   type RightAnalysisResult
 } from '../../shared/constants';
 import { OpenAiService } from '../../shared/api/claudeApi';
+import { analyzeAuction } from '../../shared/api/analysisApi';
+import type { AnalysisResult } from '../../shared/api/types';
 import type { AuctionItem } from '../../entities/auction';
 
 const Container = styled.div`
@@ -341,6 +343,11 @@ export const AnalysisDashboard = ({ item }: AnalysisDashboardProps) => {
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
 
+  // Analysis API 상태
+  const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);
+  const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+
   // 마크다운을 HTML로 변환하는 함수
   const markdownToHtml = (markdown: string): string => {
     if (!markdown) return '';
@@ -354,6 +361,29 @@ export const AnalysisDashboard = ({ item }: AnalysisDashboardProps) => {
     }
   };
 
+  // Analysis API 호출 (점수 계산)
+  useEffect(() => {
+    const fetchAnalysis = async () => {
+      setIsLoadingAnalysis(true);
+      setAnalysisError(null);
+
+      try {
+        const result = await analyzeAuction(item);
+        console.log('📊 Analysis API 응답:', result);
+        setAnalysisData(result);
+      } catch (error) {
+        console.error('Analysis API 호출 실패:', error);
+        setAnalysisError(error instanceof Error ? error.message : '분석 데이터를 불러오는데 실패했습니다.');
+      } finally {
+        setIsLoadingAnalysis(false);
+      }
+    };
+
+    if (item) {
+      fetchAnalysis();
+    }
+  }, [item]);
+
   // Claude API 호출
   useEffect(() => {
     const fetchAIAnalysis = async () => {
@@ -361,16 +391,22 @@ export const AnalysisDashboard = ({ item }: AnalysisDashboardProps) => {
       setAiError(null);
 
       try {
-        // 점수 계산 (실제 점수 - 임시로 하드코딩, 나중에 실제 계산 로직으로 대체)
-        const priceActualScore = 34;
-        const riskActualScore = 49;
-        const totalScore = priceActualScore + riskActualScore;
+        // Analysis API에서 받은 점수 사용, 없으면 기본값
+        const priceActualScore = analysisData
+          ? analysisData['감정가대비_할인율_점수'] + analysisData['시세대비_할인율_점수'] + analysisData['소재지_점수']
+          : 34;
+        const riskActualScore = analysisData
+          ? analysisData['배당요구종기_점수'] + analysisData['물건비고_점수'] + analysisData['물건상태_점수']
+          : 49;
+        const totalScore = analysisData ? analysisData['총점'] : priceActualScore + riskActualScore;
 
         // 가격 데이터
         const appraisalPrice = item.appraisalPrice;
         const minSalePrice = item.minSalePrice;
-        const estimatedMarketPrice = Math.round(appraisalPrice * 1.1); // 임시: 감정가의 110%로 추정
-        const locationImportance: '높음' | '보통' | '낮음' = '높음'; // 임시
+        const estimatedMarketPrice = analysisData?.['추정시세_원'] || Math.round(appraisalPrice * 1.1);
+        // 소재지 점수에 따른 중요도 결정
+        const locationScore = analysisData?.['소재지_점수'] || 0;
+        const locationImportance: '높음' | '보통' | '낮음' = locationScore >= 20 ? '높음' : locationScore >= 10 ? '보통' : '낮음';
         
         // 가격 분석 계산
         const appraisalRatio = calculateAppraisalRatio(minSalePrice, appraisalPrice);
@@ -380,7 +416,7 @@ export const AnalysisDashboard = ({ item }: AnalysisDashboardProps) => {
         const rightAnalysisResult: RightAnalysisResult = '양호';
         const propertyStatus: PropertyStatus = '관리 양호';
 
-        const analysisData = {
+        const claudeInputData = {
           priceScore: priceActualScore,
           riskScore: riskActualScore,
           totalScore,
@@ -395,7 +431,7 @@ export const AnalysisDashboard = ({ item }: AnalysisDashboardProps) => {
           dividendDeadline: item.dividendDeadline,
         };
 
-        const result = await OpenAiService.analyzeAuctionItem(item, analysisData);
+        const result = await OpenAiService.analyzeAuctionItem(item, claudeInputData);
         setAiAnalysis(result);
       } catch (error) {
         console.error('AI 분석 실패:', error);
@@ -405,43 +441,73 @@ export const AnalysisDashboard = ({ item }: AnalysisDashboardProps) => {
       }
     };
 
-    if (item) {
+    if (item && analysisData) {
       fetchAIAnalysis();
     }
-  }, [item]);
+  }, [item, analysisData]);
 
   const renderOverview = () => {
-    // 점수 계산 (실제 점수 - 임시로 하드코딩)
-    const PRICE_MAX_SCORE = 55; // 가격 매력도 만점
-    const RISK_MAX_SCORE = 30; // 권리 위험도 만점
-    
-    const priceActualScore = 34; // 가격 매력도 실제 점수 (55점 만점)
-    const riskActualScore = 49; // 권리 위험도 실제 점수 (30점 만점)
-    
+    // 로딩 중일 때
+    if (isLoadingAnalysis || !analysisData) {
+      return (
+        <TabContent>
+          <div style={{ textAlign: 'center', padding: '4rem', color: '#999999' }}>
+            분석 데이터를 불러오는 중...
+          </div>
+        </TabContent>
+      );
+    }
+
+    // 에러 발생 시
+    if (analysisError) {
+      return (
+        <TabContent>
+          <div style={{ textAlign: 'center', padding: '4rem', color: '#f5222d' }}>
+            {analysisError}
+          </div>
+        </TabContent>
+      );
+    }
+
+    // 점수 계산 (Analysis API 데이터 사용)
+    const PRICE_MAX_SCORE = 65; // 가격 매력도 만점 (감정가대비 10 + 시세대비 30 + 소재지 25)
+    const RISK_MAX_SCORE = 35; // 권리 위험도 만점 (물건비고 20 + 물건상태 10 + 배당요구종기 5)
+
+    // API에서 받은 점수 사용
+    const priceActualScore = analysisData
+      ? analysisData['감정가대비_할인율_점수'] + analysisData['시세대비_할인율_점수'] + analysisData['소재지_점수']
+      : 0;
+    const riskActualScore = analysisData
+      ? analysisData['배당요구종기_점수'] + analysisData['물건비고_점수'] + analysisData['물건상태_점수']
+      : 0;
+
     // 100점 기준으로 환산된 점수
     const priceConvertedScore = Math.round((priceActualScore / PRICE_MAX_SCORE) * 100);
     const riskConvertedScore = Math.round((riskActualScore / RISK_MAX_SCORE) * 100);
-    
-    // 종합 투자 점수 (실제 점수 합계)
-    const totalScore = priceActualScore + riskActualScore;
+
+    // 종합 투자 점수
+    const totalScore = analysisData?.['총점'] || 0;
 
     // 가격 데이터 (실제 데이터 사용)
     const appraisalPrice = item.appraisalPrice;
     const minSalePrice = item.minSalePrice;
-    const estimatedMarketPrice = Math.round(appraisalPrice * 1.1); // 임시: 감정가의 110%로 추정
-    const locationImportance: '높음' | '보통' | '낮음' = '높음'; // 임시
-    
+    const estimatedMarketPrice = analysisData?.['추정시세_원'] || Math.round(appraisalPrice * 1.1);
+    // 소재지 점수에 따른 중요도 결정
+    const locationScore = analysisData?.['소재지_점수'] || 0;
+    const locationImportance: '높음' | '보통' | '낮음' = locationScore >= 20 ? '높음' : locationScore >= 10 ? '보통' : '낮음';
+
     // 가격 분석 계산
-    const appraisalRatio = calculateAppraisalRatio(minSalePrice, appraisalPrice);
+    const appraisalRatio = analysisData?.['감정가대비_할인율(%)'] || calculateAppraisalRatio(minSalePrice, appraisalPrice);
     const priceDifference = calculatePriceDifference(estimatedMarketPrice, minSalePrice);
 
-    // 위험 요소 데이터 (임시)
-    const rightAnalysisResult: RightAnalysisResult = '양호';
-    const propertyStatus: PropertyStatus = '관리 양호';
+    // 위험 요소 데이터
+    const rightAnalysisResult: RightAnalysisResult = analysisData?.['물건비고_점수'] && analysisData['물건비고_점수'] >= 8 ? '양호' : '주의';
+    const propertyStatus: PropertyStatus = analysisData?.['물건상태_점수'] && analysisData['물건상태_점수'] >= 8 ? '관리 양호' : '일부 노후';
     const dividendDeadline = item.dividendDeadline || undefined;
 
-    // 등급과 코멘트 계산
-    const { grade, comment } = getScoreGradeAndComment(totalScore);
+    // 등급과 코멘트 계산 (API에서 받은 등급 사용)
+    const apiGrade = analysisData?.['등급'] || '';
+    const { grade, comment } = apiGrade ? { grade: apiGrade, comment: '' } : getScoreGradeAndComment(totalScore);
 
     return (
       <TabContent>
@@ -458,7 +524,7 @@ export const AnalysisDashboard = ({ item }: AnalysisDashboardProps) => {
         {/* 주요 지표 요약 */}
         <SummaryGrid>
           <SummaryCard>
-              <SummaryTitle>가격 매력 (55점)</SummaryTitle>
+              <SummaryTitle>가격 매력 (65점)</SummaryTitle>
             <SummaryValue>
                 <ScoreBadge $score={priceConvertedScore}>{priceConvertedScore}점</ScoreBadge>
             </SummaryValue>
@@ -466,7 +532,7 @@ export const AnalysisDashboard = ({ item }: AnalysisDashboardProps) => {
           </SummaryCard>
 
           <SummaryCard>
-              <SummaryTitle>권리 위험도 (30점)</SummaryTitle>
+              <SummaryTitle>권리 위험도 (35점)</SummaryTitle>
             <SummaryValue>
                 <ScoreBadge $score={riskConvertedScore}>{riskConvertedScore}점</ScoreBadge>
             </SummaryValue>
@@ -587,14 +653,30 @@ export const AnalysisDashboard = ({ item }: AnalysisDashboardProps) => {
   };
 
   const renderPriceAnalysis = () => {
-    // 가격 데이터 (실제 데이터 사용)
+    // 로딩/에러 처리
+    if (isLoadingAnalysis) {
+      return (
+        <TabContent>
+          <div style={{ textAlign: 'center', padding: '4rem', color: '#999999' }}>
+            분석 데이터를 불러오는 중...
+          </div>
+        </TabContent>
+      );
+    }
+
+    // 가격 데이터 (API 데이터 사용)
     const appraisalPrice = item.appraisalPrice;
     const minSalePrice = item.minSalePrice;
-    const priceActualScore = 34; // 가격 매력도 실제 점수 (55점 만점)
+
+    // API에서 받은 점수 사용
+    const appraisalDiscountScore = analysisData?.['감정가대비_할인율_점수'] || 0;
+    const marketDiscountScore = analysisData?.['시세대비_할인율_점수'] || 0;
+    const locationScore = analysisData?.['소재지_점수'] || 0;
+    const priceActualScore = appraisalDiscountScore + marketDiscountScore + locationScore;
 
     return (
       <TabContent>
-        <SectionTitle>세부 가격분석(점수 : {priceActualScore}/55)</SectionTitle>
+        <SectionTitle>세부 가격분석(점수 : {priceActualScore}/65)</SectionTitle>
 
         <TwoColumnLayout>
           {/* 왼쪽: 시세 및 최저가 추이 */}
@@ -615,6 +697,22 @@ export const AnalysisDashboard = ({ item }: AnalysisDashboardProps) => {
                 <DataLabel>최저가</DataLabel>
                 <DataValue>{formatPriceDetail(minSalePrice)}</DataValue>
               </DataRow>
+              <DataRow>
+                <DataLabel>감정가대비 할인율</DataLabel>
+                <DataValue>{analysisData?.['감정가대비_할인율(%)'] || '-'}%</DataValue>
+              </DataRow>
+              {analysisData?.['추정시세_원'] && (
+                <DataRow>
+                  <DataLabel>추정 시세</DataLabel>
+                  <DataValue>{formatPriceDetail(analysisData['추정시세_원'])}</DataValue>
+                </DataRow>
+              )}
+              {analysisData?.['시세대비_할인율(%)'] && (
+                <DataRow>
+                  <DataLabel>시세대비 할인율</DataLabel>
+                  <DataValue>{analysisData['시세대비_할인율(%)']}%</DataValue>
+                </DataRow>
+              )}
             </div>
             <div>
               <DataRow style={{ paddingBottom: '0.5rem' }}>
@@ -628,27 +726,27 @@ export const AnalysisDashboard = ({ item }: AnalysisDashboardProps) => {
                 <DataLabel>감정가대비할인율</DataLabel>
                 <DataValue style={{ display: 'flex', gap: '4rem', minWidth: '200px', justifyContent: 'flex-end' }}>
                   <span style={{ textAlign: 'center', flex: '0 0 60px' }}>10</span>
-                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>-</span>
+                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>{appraisalDiscountScore}</span>
                 </DataValue>
               </DataRow>
               <DataRow>
                 <DataLabel>시세대비할인율</DataLabel>
                 <DataValue style={{ display: 'flex', gap: '4rem', minWidth: '200px', justifyContent: 'flex-end' }}>
-                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>25</span>
-                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>-</span>
+                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>30</span>
+                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>{marketDiscountScore}</span>
                 </DataValue>
               </DataRow>
               <DataRow>
                 <DataLabel>소재지 중요도</DataLabel>
                 <DataValue style={{ display: 'flex', gap: '4rem', minWidth: '200px', justifyContent: 'flex-end' }}>
-                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>20</span>
-                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>-</span>
+                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>25</span>
+                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>{locationScore}</span>
                 </DataValue>
               </DataRow>
               <DataRow>
                 <DataLabel style={{ fontWeight: '700', color: '#ffffff' }}>합계</DataLabel>
                 <DataValue style={{ display: 'flex', gap: '4rem', minWidth: '200px', justifyContent: 'flex-end', fontWeight: '700', color: '#1890ff' }}>
-                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>55</span>
+                  <span style={{ textAlign: 'center', flex: '0 0 60px' }}>65</span>
                   <span style={{ textAlign: 'center', flex: '0 0 60px' }}>{priceActualScore}</span>
                 </DataValue>
               </DataRow>
@@ -668,12 +766,27 @@ export const AnalysisDashboard = ({ item }: AnalysisDashboardProps) => {
   };
 
   const renderRiskAnalysis = () => {
-    // 위험 분석 점수
-    const riskActualScore = 49; // 권리 위험도 실제 점수 (30점 만점)
+    // 로딩/에러 처리
+    if (isLoadingAnalysis) {
+      return (
+        <TabContent>
+          <div style={{ textAlign: 'center', padding: '4rem', color: '#999999' }}>
+            분석 데이터를 불러오는 중...
+          </div>
+        </TabContent>
+      );
+    }
 
-    // 위험 분석 데이터 (실제 데이터 사용)
-    const propertyNoteScore = 8; // 물건비고 스코어링 (예시)
-    const propertyStatus: PropertyStatus = '관리 양호'; // 물건 상태
+    // API에서 받은 점수 사용
+    const propertyNoteScore = analysisData?.['물건비고_점수'] || 0;
+    const propertyStatusScore = analysisData?.['물건상태_점수'] || 0;
+    const dividendScore = analysisData?.['배당요구종기_점수'] || 0;
+
+    // 위험 분석 점수 합계
+    const riskActualScore = propertyNoteScore + propertyStatusScore + dividendScore;
+
+    // 물건 상태 텍스트 결정
+    const propertyStatus: PropertyStatus = propertyStatusScore >= 8 ? '관리 양호' : propertyStatusScore >= 5 ? '일부 노후' : '심한 노후';
     const dividendDeadline = item.dividendDeadline || undefined;
 
     // 점수에 따른 평가 결정 함수 (점수가 높을수록 안전)
@@ -684,16 +797,14 @@ export const AnalysisDashboard = ({ item }: AnalysisDashboardProps) => {
       return '위험';
     };
 
-    // 각 항목의 점수와 배점 (예시 데이터)
-    const propertyNoteMaxScore = 15; // 물건비고 스코어링 배점
-    const propertyStatusScore = 8; // 물건 상태 점수
+    // 각 항목의 배점
+    const propertyNoteMaxScore = 20; // 물건비고 스코어링 배점 (관리 위험도)
     const propertyStatusMaxScore = 10; // 물건 상태 배점
-    const dividendScore = 5; // 배당요구종기 점수
     const dividendMaxScore = 5; // 배당요구종기 배점
 
     return (
       <TabContent>
-        <SectionTitle>세부 위험분석 (점수: {riskActualScore}/30)</SectionTitle>
+        <SectionTitle>세부 위험분석 (점수: {riskActualScore}/35)</SectionTitle>
         
         <CardTitle style={{ marginBottom: '1rem' }}>권리 및 상태 상세 정보</CardTitle>
         

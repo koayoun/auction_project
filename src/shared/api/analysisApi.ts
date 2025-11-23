@@ -1,9 +1,9 @@
 import type { AnalysisRequest, AnalysisResult } from './types';
 import type { AuctionItem } from '../../entities/auction';
 
-// 개발: Vite 프록시 사용 (/api/analysis -> https://analysis.bdc105.kro.kr)
-// 프로덕션: 환경변수로 직접 URL 설정
-const ANALYSIS_API_URL = import.meta.env.VITE_ANALYSIS_API_URL || '/api/analysis';
+// 프로덕션: https://analysis.bdc105.kro.kr (CORS 필요)
+// 개발: Vite 프록시 사용 시 /api/analysis
+const ANALYSIS_API_URL = import.meta.env.VITE_ANALYSIS_API_URL || 'https://analysis.bdc105.kro.kr';
 
 // 에러 처리 유틸리티
 class AnalysisApiError extends Error {

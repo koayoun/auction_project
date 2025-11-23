@@ -3,7 +3,9 @@ import type { AuctionItem } from '../../entities/auction';
 
 // 프로덕션: https://analysis.bdc105.kro.kr (CORS 필요)
 // 개발: Vite 프록시 사용 시 /api/analysis
-const ANALYSIS_API_URL = import.meta.env.VITE_ANALYSIS_API_URL || 'https://analysis.bdc105.kro.kr';
+// const ANALYSIS_API_URL = import.meta.env.VITE_ANALYSIS_API_URL || 'https://analysis.bdc105.kro.kr';
+const ANALYSIS_API_URL = import.meta.env.VITE_ANALYSIS_API_URL || 'http://127.0.0.1:8001';
+
 
 // 에러 처리 유틸리티
 class AnalysisApiError extends Error {
@@ -34,7 +36,7 @@ function convertToAnalysisRequest(item: AuctionItem): AnalysisRequest {
     소재지: item.address,
     배당요구종기: item.dividendDeadline || '',
     물건비고: item.note || '',
-    물건상태: '', // 물건상태는 별도로 입력받아야 함
+    물건상태: item.propertyCondition || '', // 감정평가요항표에서 추출한 건물 상태 정보
   };
 }
 

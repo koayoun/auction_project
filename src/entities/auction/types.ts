@@ -12,7 +12,8 @@ export interface AuctionItem {
   dividendDeadline?: string;     // 배당요구종기 (YYYY-MM-DD)
   claimAmount?: number;          // 청구금액 (원)
   failedBidCount?: number;       // 유찰 횟수
-  note?: string;                 // 비고
+  note?: string;                 // 비고 (물건비고 - 권리관계 정보)
+  propertyCondition?: string;    // 물건상태 (건물 상태 정보)
   area?: number;                 // 면적 (m²)
   bidStartDate?: string;         // 입찰 시작일 (YYYY-MM-DD)
   bidEndDate?: string;           // 입찰 종료일 (YYYY-MM-DD)

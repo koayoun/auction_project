@@ -8,11 +8,17 @@ import type {
   BigScrapeParams,
   BigBatchScrapeParams,
   BigAuctionItem,
+  DetailResponse,
+  DetailParams,
+  AppraisalSummary,
 } from './types';
 
-//const API_BASE_URL = import.meta.env.VITE_BIG_API_URL || 'http://127.0.0.1:8000';
+const API_BASE_URL = import.meta.env.VITE_BIG_API_URL || 'http://127.0.0.1:8000';
 //const API_BASE_URL = import.meta.env.VITE_BIG_API_URL || 'http://backend-app-service.bdc105.svc.cluster.local:8000';
-const API_BASE_URL = import.meta.env.VITE_BIG_API_URL || 'https://backend.bdc105.kro.kr';
+// const API_BASE_URL = import.meta.env.VITE_BIG_API_URL || 'https://backend.bdc105.kro.kr';
+
+// Detail API URL (법원경매 세부정보 API) - 메인 백엔드와 동일
+const DETAIL_API_URL = import.meta.env.VITE_DETAIL_API_URL || 'https://backend.bdc105.kro.kr';
 
 // 에러 처리 유틸리티
 class ApiError extends Error {
@@ -269,6 +275,78 @@ export async function getGuList(sido?: string): Promise<string[]> {
 // 헬스 체크
 export async function healthCheck(): Promise<{ status: string; message: string }> {
   return fetchApi('/');
+}
+
+// 6. 경매 물건 상세 정보 조회 (배당요구종기, 감정평가요항표)
+export async function fetchAuctionDetail(params: DetailParams): Promise<DetailResponse> {
+  const url = new URL('/api/detail', DETAIL_API_URL);
+
+  // 파라미터 추가
+  url.searchParams.append('case_no', params.case_no);
+  if (params.si) url.searchParams.append('si', params.si);
+  if (params.gu) url.searchParams.append('gu', params.gu);
+  if (params.court_no) url.searchParams.append('court_no', params.court_no);
+  if (params.obj_no) url.searchParams.append('obj_no', params.obj_no);
+
+  try {
+    const response = await fetch(url.toString());
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new ApiError(response.status, `Detail API 요청 실패: ${errorText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError(500, `네트워크 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+  }
+}
+
+// 감정평가요항표를 물건비고(note) 문자열로 변환 (권리관계 중심)
+// 백엔드 키워드: 임차인, 대항력, 권리, 점유자, 유치권, 법정지상권, 가처분 등
+export function appraisalSummaryToNote(summary: AppraisalSummary): string {
+  const items: string[] = [];
+
+  // 권리관계 관련 정보 (물건비고 스코어링에 사용)
+  if (summary.other_reference_matters) {
+    items.push(`[기타참고사항] ${summary.other_reference_matters}`);
+  }
+  if (summary.difference_from_public_records) {
+    items.push(`[공부와의차이] ${summary.difference_from_public_records}`);
+  }
+  if (summary.land_use_plan_and_restrictions) {
+    items.push(`[토지이용계획/제한상태] ${summary.land_use_plan_and_restrictions}`);
+  }
+  if (summary.usage_status) {
+    items.push(`[이용상태] ${summary.usage_status}`);
+  }
+
+  return items.join(' | ');
+}
+
+// 감정평가요항표를 물건상태(propertyCondition) 문자열로 변환 (건물 상태 중심)
+// 백엔드 키워드: 리모델링, 올수리, 신축, 양호, 보통, 누수, 균열, 곰팡이, 파손 등
+export function appraisalSummaryToCondition(summary: AppraisalSummary): string {
+  const items: string[] = [];
+
+  // 건물 상태 관련 정보 (물건상태 스코어링에 사용)
+  if (summary.building_structure) {
+    items.push(`[건물구조] ${summary.building_structure}`);
+  }
+  if (summary.equipment_details) {
+    items.push(`[설비내역] ${summary.equipment_details}`);
+  }
+  if (summary.usage_status) {
+    items.push(`[이용상태] ${summary.usage_status}`);
+  }
+  if (summary.location_and_surroundings) {
+    items.push(`[위치/주위환경] ${summary.location_and_surroundings}`);
+  }
+
+  return items.join(' | ');
 }
 
 export { ApiError };

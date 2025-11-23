@@ -129,3 +129,51 @@ export interface AnalysisResult {
   '누락항목': string[];
   error: boolean;
 }
+
+// Detail API 감정평가요항표 타입
+export interface AppraisalSummary {
+  location_and_surroundings: string;    // 위치 및 주위환경
+  traffic_conditions: string;            // 교통상황
+  building_structure: string;            // 건물의 구조
+  usage_status: string;                  // 이용상태
+  equipment_details: string;             // 설비내역
+  land_shape_and_usage: string;          // 토지의 형상 및 이용상태
+  adjacent_road_conditions: string;      // 인접 도로상태등
+  land_use_plan_and_restrictions: string; // 토지이용계획 및 제한상태
+  difference_from_public_records: string; // 공부와의 차이
+  other_reference_matters: string;       // 기타참고사항
+}
+
+// Detail API 응답 데이터 타입
+export interface DetailData {
+  case_no: string;
+  event_no1: string;
+  event_no2: string;
+  si: string;
+  gu: string;
+  region_code1: string;
+  region_code2: string;
+  court_no: string;
+  obj_no: string;
+  dividend_claim_deadline: string;  // 배당요구종기 (YYYYMMDD)
+  dividend_claim_date: string;      // 배당요구종기 (YYYY-MM-DD)
+  appraisal_summary: AppraisalSummary;
+  raw_text: string;
+  raw_html: string;
+}
+
+// Detail API 응답 타입
+export interface DetailResponse {
+  success: boolean;
+  data?: DetailData;
+  error?: string;
+}
+
+// Detail API 요청 파라미터
+export interface DetailParams {
+  case_no: string;
+  si?: string;
+  gu?: string;
+  court_no?: string;
+  obj_no?: string;
+}

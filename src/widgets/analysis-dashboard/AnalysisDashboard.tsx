@@ -11,7 +11,7 @@ import {
   type PropertyStatus,
   type RightAnalysisResult
 } from '../../shared/constants';
-import { OpenAiService } from '../../shared/api/claudeApi';
+import { GeminiService } from '../../shared/api/geminiApi';
 import { analyzeAuction } from '../../shared/api/analysisApi';
 import type { AnalysisResult } from '../../shared/api/types';
 import type { AuctionItem } from '../../entities/auction';
@@ -384,7 +384,7 @@ export const AnalysisDashboard = ({ item }: AnalysisDashboardProps) => {
     }
   }, [item]);
 
-  // Claude API 호출
+  // Gemini API 호출
   useEffect(() => {
     const fetchAIAnalysis = async () => {
       setIsLoadingAI(true);
@@ -416,7 +416,7 @@ export const AnalysisDashboard = ({ item }: AnalysisDashboardProps) => {
         const rightAnalysisResult: RightAnalysisResult = '양호';
         const propertyStatus: PropertyStatus = '관리 양호';
 
-        const claudeInputData = {
+        const analysisInputData = {
           priceScore: priceActualScore,
           riskScore: riskActualScore,
           totalScore,
@@ -431,7 +431,7 @@ export const AnalysisDashboard = ({ item }: AnalysisDashboardProps) => {
           dividendDeadline: item.dividendDeadline,
         };
 
-        const result = await OpenAiService.analyzeAuctionItem(item, claudeInputData);
+        const result = await GeminiService.analyzeAuctionItem(item, analysisInputData);
         setAiAnalysis(result);
       } catch (error) {
         console.error('AI 분석 실패:', error);

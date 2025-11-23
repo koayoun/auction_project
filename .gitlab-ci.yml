@@ -54,8 +54,8 @@ build-image:
         --build-arg BUILDKIT_INLINE_CACHE=1 \
         --build-arg CI_COMMIT_SHA=${CI_COMMIT_SHA} \
         --build-arg CI_COMMIT_SHORT_SHA=${CI_COMMIT_SHORT_SHA} \
-        --build-arg VITE_ANTHROPIC_API_KEY=${VITE_ANTHROPIC_API_KEY} \
-        --build-arg VITE_ANTHROPIC_MODEL=${VITE_ANTHROPIC_MODEL} \
+        --build-arg VITE_GEMINI_API_KEY=${VITE_GEMINI_API_KEY} \
+        --build-arg VITE_GEMINI_MODEL=${VITE_GEMINI_MODEL} \
         --cache-from ${IMAGE_NAME}:latest \
         --tag ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA} \
         --tag ${IMAGE_NAME}:latest \

@@ -13,9 +13,9 @@ import type {
   AppraisalSummary,
 } from './types';
 
-const API_BASE_URL = import.meta.env.VITE_BIG_API_URL || 'http://127.0.0.1:8000';
+//const API_BASE_URL = import.meta.env.VITE_BIG_API_URL || 'http://127.0.0.1:8000';
 //const API_BASE_URL = import.meta.env.VITE_BIG_API_URL || 'http://backend-app-service.bdc105.svc.cluster.local:8000';
-// const API_BASE_URL = import.meta.env.VITE_BIG_API_URL || 'https://backend.bdc105.kro.kr';
+ const API_BASE_URL = import.meta.env.VITE_BIG_API_URL || 'https://backend.bdc105.kro.kr';
 
 // Detail API URL (법원경매 세부정보 API) - 메인 백엔드와 동일
 const DETAIL_API_URL = import.meta.env.VITE_DETAIL_API_URL || 'https://backend.bdc105.kro.kr';

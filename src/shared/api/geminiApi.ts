@@ -1,28 +1,25 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { AuctionItem } from '../../entities/auction';
 
-export class OpenAiService {
+export class GeminiService {
   // 환경 변수에서 API 키 가져오기 (Vite는 VITE_ 접두사 필요)
-  static API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
-  static MODEL = import.meta.env.VITE_ANTHROPIC_MODEL || 'claude-sonnet-4-5-20250929';
-  static anthropic: Anthropic | null = null;
+  static API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+  static MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.0-flash';
+  static genAI: GoogleGenerativeAI | null = null;
 
-  static getClient(): Anthropic {
-    if (!OpenAiService.API_KEY) {
-      throw new Error('VITE_ANTHROPIC_API_KEY 환경 변수가 설정되지 않았습니다. .env 파일을 확인해주세요.');
+  static getClient(): GoogleGenerativeAI {
+    if (!GeminiService.API_KEY) {
+      throw new Error('VITE_GEMINI_API_KEY 환경 변수가 설정되지 않았습니다. .env 파일을 확인해주세요.');
     }
 
-    if (!OpenAiService.anthropic) {
-      OpenAiService.anthropic = new Anthropic({
-        apiKey: OpenAiService.API_KEY,
-        dangerouslyAllowBrowser: true, // 브라우저 환경에서 사용 허용 (보안 주의)
-      });
+    if (!GeminiService.genAI) {
+      GeminiService.genAI = new GoogleGenerativeAI(GeminiService.API_KEY);
     }
-    return OpenAiService.anthropic;
+    return GeminiService.genAI;
   }
 
   /**
-   * 경매 물건 분석 데이터를 Claude API에 전달하여 종합 분석을 받아옵니다.
+   * 경매 물건 분석 데이터를 Gemini API에 전달하여 종합 분석을 받아옵니다.
    */
   static async analyzeAuctionItem(
     item: AuctionItem,
@@ -47,7 +44,8 @@ export class OpenAiService {
     overallOpinion: string;
     investmentRating: string;
   }> {
-    const client = OpenAiService.getClient();
+    const genAI = GeminiService.getClient();
+    const model = genAI.getGenerativeModel({ model: GeminiService.MODEL });
 
     // 프롬프트 구성
     const prompt = `다음 경매 물건 정보를 바탕으로 투자 분석을 작성해주세요. 당신은 경매 전문가이므로 최대한 정확하고 자세하게 분석해주세요.
@@ -91,54 +89,43 @@ ${item.area ? `- 면적: ${item.area}m²` : ''}
 }`;
 
     try {
-      const message = await client.messages.create({
-        model: OpenAiService.MODEL,
-        max_tokens: 2000,
-        messages: [
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
+      const result = await model.generateContent(prompt, {
+        temperature: 0.7,
+        maxOutputTokens: 2000,
       });
 
-      // 응답 파싱
-      const content = message.content[0];
-      if (content.type === 'text') {
-        const text = content.text;
-        
-        // JSON 추출 시도
-        try {
-          // JSON 블록 찾기
-          const jsonMatch = text.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-            return {
-              investmentValue: parsed.investmentValue || text,
-              riskAnalysis: parsed.riskAnalysis || text,
-              locationAnalysis: parsed.locationAnalysis || text,
-              overallOpinion: parsed.overallOpinion || text,
-              investmentRating: parsed.investmentRating || '★★★★★ (5/5)',
-            };
-          }
-        } catch (e) {
-          // JSON 파싱 실패 시 전체 텍스트를 종합 의견으로 사용
-          console.warn('JSON 파싱 실패, 전체 텍스트 사용:', e);
-        }
+      const response = result.response;
+      const text = response.text();
 
-        // JSON이 없으면 전체 텍스트를 종합 의견으로 사용
-        return {
-          investmentValue: text,
-          riskAnalysis: text,
-          locationAnalysis: text,
-          overallOpinion: text,
-          investmentRating: '★★★★★ (5/5)',
-        };
+      // JSON 추출 시도
+      try {
+        // JSON 블록 찾기
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          return {
+            investmentValue: parsed.investmentValue || text,
+            riskAnalysis: parsed.riskAnalysis || text,
+            locationAnalysis: parsed.locationAnalysis || text,
+            overallOpinion: parsed.overallOpinion || text,
+            investmentRating: parsed.investmentRating || '★★★★★ (5/5)',
+          };
+        }
+      } catch (e) {
+        // JSON 파싱 실패 시 전체 텍스트를 종합 의견으로 사용
+        console.warn('JSON 파싱 실패, 전체 텍스트 사용:', e);
       }
 
-      throw new Error('응답 형식이 올바르지 않습니다.');
+      // JSON이 없으면 전체 텍스트를 종합 의견으로 사용
+      return {
+        investmentValue: text,
+        riskAnalysis: text,
+        locationAnalysis: text,
+        overallOpinion: text,
+        investmentRating: '★★★★★ (5/5)',
+      };
     } catch (error) {
-      console.error('Claude API 호출 실패:', error);
+      console.error('Gemini API 호출 실패:', error);
       throw new Error(
         `AI 분석 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
       );

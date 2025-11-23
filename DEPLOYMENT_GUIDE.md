@@ -1,11 +1,11 @@
-# 🚀 서버 배포 가이드 - Claude API 키 설정
+# 🚀 서버 배포 가이드 - Gemini API 키 설정
 
-이 문서는 GitLab CI/CD를 통해 서버에 배포할 때 Claude API 키를 사용하는 방법을 설명합니다.
+이 문서는 GitLab CI/CD를 통해 서버에 배포할 때 Gemini API 키를 사용하는 방법을 설명합니다.
 
 ## 📋 사전 준비사항
 
 1. GitLab 프로젝트에 접근 권한
-2. Claude API 키 (Anthropic에서 발급)
+2. Gemini API 키 (Google AI Studio에서 발급)
 3. GitLab CI/CD Variables 설정 권한
 
 ---
@@ -27,16 +27,16 @@
 **Add variable** 버튼 클릭 후 다음 정보 입력:
 
 **첫 번째 변수:**
-- **Key**: `VITE_ANTHROPIC_API_KEY`
-- **Value**: 실제 Claude API 키 (예: `sk-ant-api03-...`)
+- **Key**: `VITE_GEMINI_API_KEY`
+- **Value**: 실제 Gemini API 키 (예: `AIzaSy...`)
 - **Type**: `Variable`
 - **Protect variable**: ✅ 체크 (master/main 브랜치에서만 사용)
 - **Mask variable**: ✅ 체크 (로그에서 API 키 숨김)
 - **Environment scope**: `All` (또는 특정 환경 선택)
 
 **두 번째 변수 (선택사항):**
-- **Key**: `VITE_ANTHROPIC_MODEL`
-- **Value**: `claude-sonnet-4-5-20250929` (또는 사용할 모델)
+- **Key**: `VITE_GEMINI_MODEL`
+- **Value**: `gemini-2.0-flash` (또는 사용할 모델)
 - **Type**: `Variable`
 - **Protect variable**: ✅ 체크
 - **Mask variable**: ❌ 체크 안 함 (모델명은 민감정보 아님)
@@ -54,22 +54,22 @@
 
 **`.gitlab-ci.yml`** (이미 설정됨):
 ```yaml
---build-arg VITE_ANTHROPIC_API_KEY=${VITE_ANTHROPIC_API_KEY} \
---build-arg VITE_ANTHROPIC_MODEL=${VITE_ANTHROPIC_MODEL} \
+--build-arg VITE_GEMINI_API_KEY=${VITE_GEMINI_API_KEY} \
+--build-arg VITE_GEMINI_MODEL=${VITE_GEMINI_MODEL} \
 ```
 
 **`Dockerfile`** (이미 설정됨):
 ```dockerfile
-ARG VITE_ANTHROPIC_API_KEY
-ARG VITE_ANTHROPIC_MODEL=claude-sonnet-4-5-20250929
-ENV VITE_ANTHROPIC_API_KEY=${VITE_ANTHROPIC_API_KEY}
-ENV VITE_ANTHROPIC_MODEL=${VITE_ANTHROPIC_MODEL}
+ARG VITE_GEMINI_API_KEY
+ARG VITE_GEMINI_MODEL=gemini-2.0-flash
+ENV VITE_GEMINI_API_KEY=${VITE_GEMINI_API_KEY}
+ENV VITE_GEMINI_MODEL=${VITE_GEMINI_MODEL}
 ```
 
-**`src/shared/api/claudeApi.ts`** (이미 설정됨):
+**`src/shared/api/geminiApi.ts`** (이미 설정됨):
 ```typescript
-static API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
-static MODEL = import.meta.env.VITE_ANTHROPIC_MODEL || 'claude-sonnet-4-5-20250929';
+static API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+static MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.0-flash';
 ```
 
 ---
@@ -79,7 +79,7 @@ static MODEL = import.meta.env.VITE_ANTHROPIC_MODEL || 'claude-sonnet-4-5-202509
 #### 3-1. 코드 커밋 및 푸시
 ```bash
 git add .
-git commit -m "feat: Claude API 통합"
+git commit -m "feat: Gemini API 통합"
 git push origin master
 ```
 
@@ -93,7 +93,7 @@ git push origin master
 #### 3-3. 빌드 로그 확인
 - 파이프라인 클릭 → **build-image** job 클릭
 - 로그에서 다음 확인:
-  - `--build-arg VITE_ANTHROPIC_API_KEY=***` (마스킹됨)
+  - `--build-arg VITE_GEMINI_API_KEY=***` (마스킹됨)
   - `✅ 이미지 빌드 완료`
   - `✅ 이미지 Push 완료!`
 
@@ -114,7 +114,7 @@ git push origin master
 만약 "AI 분석 실패" 메시지가 나타나면:
 1. 브라우저 개발자 도구 (F12) → Console 탭 확인
 2. 에러 메시지 확인:
-   - `VITE_ANTHROPIC_API_KEY 환경 변수가 설정되지 않았습니다`: GitLab Variables 미설정
+   - `VITE_GEMINI_API_KEY 환경 변수가 설정되지 않았습니다`: GitLab Variables 미설정
    - `AI 분석 실패: ...`: API 키 오류 또는 네트워크 문제
 
 ---
@@ -124,11 +124,11 @@ git push origin master
 ### 문제 1: 빌드 시 API 키가 전달되지 않음
 
 **증상:**
-- 빌드 로그에 `VITE_ANTHROPIC_API_KEY`가 보이지 않음
+- 빌드 로그에 `VITE_GEMINI_API_KEY`가 보이지 않음
 - 런타임에 "환경 변수가 설정되지 않았습니다" 에러
 
 **해결:**
-1. GitLab Variables에 `VITE_ANTHROPIC_API_KEY`가 설정되어 있는지 확인
+1. GitLab Variables에 `VITE_GEMINI_API_KEY`가 설정되어 있는지 확인
 2. **Protect variable**이 체크되어 있으면, master/main 브랜치에서만 사용 가능
 3. Variables의 **Environment scope**가 올바른지 확인
 
@@ -149,7 +149,7 @@ git push origin master
 **해결:**
 1. 브라우저 개발자 도구 → Network 탭에서 API 호출 확인
 2. CORS 에러인지 확인
-3. API 키가 올바른지 확인 (Anthropic 대시보드에서 확인)
+3. API 키가 올바른지 확인 (Google AI Studio에서 확인)
 
 ---
 
@@ -171,8 +171,8 @@ git push origin master
 # 백엔드 (Python FastAPI 예시)
 @app.post("/api/analyze")
 async def analyze_auction(item_data: dict):
-    # Claude API 호출 (서버에서만)
-    response = anthropic_client.messages.create(...)
+    # Gemini API 호출 (서버에서만)
+    response = genai.GenerativeModel('gemini-2.0-flash').generate_content(...)
     return response
 ```
 
@@ -190,8 +190,8 @@ const response = await fetch('/api/analyze', {
 
 배포 전 확인사항:
 
-- [ ] GitLab CI/CD Variables에 `VITE_ANTHROPIC_API_KEY` 설정
-- [ ] GitLab CI/CD Variables에 `VITE_ANTHROPIC_MODEL` 설정 (선택)
+- [ ] GitLab CI/CD Variables에 `VITE_GEMINI_API_KEY` 설정
+- [ ] GitLab CI/CD Variables에 `VITE_GEMINI_MODEL` 설정 (선택)
 - [ ] `.gitignore`에 `.env` 파일 포함 확인
 - [ ] 코드에 하드코딩된 API 키 없음 확인
 - [ ] 로컬에서 `.env` 파일로 테스트 완료
@@ -205,6 +205,5 @@ const response = await fetch('/api/analyze', {
 문제가 지속되면:
 1. GitLab CI/CD 로그 확인
 2. 브라우저 개발자 도구 Console/Network 탭 확인
-3. Anthropic API 키 유효성 확인
+3. Google AI Studio에서 API 키 유효성 확인
 4. 백엔드 프록시 방식 검토
-

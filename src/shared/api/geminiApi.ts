@@ -45,7 +45,13 @@ export class GeminiService {
     investmentRating: string;
   }> {
     const genAI = GeminiService.getClient();
-    const model = genAI.getGenerativeModel({ model: GeminiService.MODEL });
+    const model = genAI.getGenerativeModel({ 
+      model: GeminiService.MODEL,
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 2000,
+      },
+    });
 
     // 프롬프트 구성
     const prompt = `다음 경매 물건 정보를 바탕으로 투자 분석을 작성해주세요. 당신은 경매 전문가이므로 최대한 정확하고 자세하게 분석해주세요.
@@ -89,10 +95,7 @@ ${item.area ? `- 면적: ${item.area}m²` : ''}
 }`;
 
     try {
-      const result = await model.generateContent(prompt, {
-        temperature: 0.7,
-        maxOutputTokens: 2000,
-      });
+      const result = await model.generateContent(prompt);
 
       const response = result.response;
       const text = response.text();

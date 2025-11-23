@@ -19,11 +19,12 @@ AI를 활용한 부동산 경매 물건 검색 및 분석 서비스입니다.
 
 ## 🛠️ 기술 스택
 
-- **Frontend Framework**: React 18 + TypeScript
+- **Frontend Framework**: React 19 + TypeScript
 - **State Management**: Redux Toolkit
-- **Routing**: React Router v6
+- **Routing**: React Router v7
 - **Styling**: Styled-components
 - **Build Tool**: Vite
+- **AI API**: Google Gemini API
 - **Architecture**: Feature-Sliced Design (FSD)
 
 ## 📦 설치 방법
@@ -52,8 +53,8 @@ cp .env.example .env
 `.env` 파일을 열어서 다음 값을 설정하세요:
 
 ```env
-VITE_ANTHROPIC_API_KEY=your_api_key_here
-VITE_ANTHROPIC_MODEL=claude-sonnet-4-5-20250929
+VITE_GEMINI_API_KEY=your_api_key_here
+VITE_GEMINI_MODEL=gemini-2.0-flash
 ```
 
 **⚠️ 중요**: `.env` 파일은 Git에 커밋되지 않습니다. 각 개발자는 자신의 API 키를 설정해야 합니다.
@@ -145,12 +146,12 @@ src/
 
 ## 🔜 향후 계획
 
-- [ ] 실제 법원 경매 API 연동
+- [x] 실제 법원 경매 API 연동
 - [ ] 실시간 입찰 정보 업데이트
 - [ ] 카카오맵/네이버맵 API 연동
 - [ ] 사용자 인증 및 관심 물건 저장
 - [ ] 모바일 반응형 UI 개선
-- [ ] 실제 AI 모델 통합
+- [x] AI 모델 통합 (Gemini API)
 
 ## 📄 라이선스
 

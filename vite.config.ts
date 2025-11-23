@@ -7,8 +7,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api/analysis': {
-        target: 'http://127.0.0.1:8001',
+        target: 'https://analysis.bdc105.kro.kr',
         changeOrigin: true,
+        secure: true,
         rewrite: (path) => path.replace(/^\/api\/analysis/, ''),
       },
     },

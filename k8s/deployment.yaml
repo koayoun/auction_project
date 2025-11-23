@@ -20,7 +20,7 @@ spec:
         - name: harbor-secret
       containers:
         - name: front
-          image: harbor.hplayer95.kro.kr/bdc105-front/front:93f447de
+          image: harbor.hplayer95.kro.kr/bdc105-front/front:5769e330
           imagePullPolicy: Always
           ports:
             - name: http

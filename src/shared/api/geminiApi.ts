@@ -53,6 +53,17 @@ export class GeminiService {
       },
     });
 
+    // totalScore를 5점 만점으로 변환하는 함수
+    const getRatingFromScore = (score: number): string => {
+      if (score >= 90) return '★★★★★ (5/5)';
+      if (score >= 75) return '★★★★☆ (4/5)';
+      if (score >= 60) return '★★★☆☆ (3/5)';
+      if (score >= 45) return '★★☆☆☆ (2/5)';
+      return '★☆☆☆☆ (1/5)';
+    };
+
+    const expectedRating = getRatingFromScore(analysisData.totalScore);
+
     // 프롬프트 구성
     const prompt = `다음 경매 물건 정보를 바탕으로 투자 분석을 작성해주세요. 당신은 경매 전문가이므로 최대한 정확하고 자세하게 분석해주세요.
 
@@ -71,10 +82,9 @@ ${item.dividendDeadline ? `- 배당요구종기: ${item.dividendDeadline}` : ''}
 ${item.note ? `- 비고: ${item.note}` : ''}
 ${item.area ? `- 면적: ${item.area}m²` : ''}
 
-## 분석 점수
+## 분석 정보
 - 가격 매력도: ${analysisData.priceScore}점
 - 권리 위험도: ${analysisData.riskScore}점
-- 종합 투자 점수: ${analysisData.totalScore}점
 - 물건 상태: ${analysisData.propertyStatus}
 - 권리 분석 결과: ${analysisData.rightAnalysisResult}
 
@@ -83,7 +93,9 @@ ${item.area ? `- 면적: ${item.area}m²` : ''}
 1. **투자 가치 평가**: 감정가 대비 할인율, 시세차익, 잠재 수익률 등을 분석
 2. **리스크 분석**: 물건 상태, 권리 관계, 배당요구종기 등을 분석
 3. **입지 분석**: 소재지의 교통 접근성, 주변 환경, 실거주/임대 수요 등을 분석
-4. **종합 의견**: 투자 매력도를 별점(1-5개)으로 평가하고, 최종 추천 의견을 작성
+4. **종합 의견**: 최종 추천 의견을 작성
+
+**중요**: investmentRating은 반드시 "${expectedRating}"로 설정해주세요.
 
 응답은 다음 JSON 형식으로 작성해주세요:
 {
@@ -91,7 +103,7 @@ ${item.area ? `- 면적: ${item.area}m²` : ''}
   "riskAnalysis": "리스크 분석 내용",
   "locationAnalysis": "입지 분석 내용",
   "overallOpinion": "종합 의견 내용",
-  "investmentRating": "★★★★★ (5/5)"
+  "investmentRating": "${expectedRating}"
 }`;
 
     try {
@@ -111,7 +123,7 @@ ${item.area ? `- 면적: ${item.area}m²` : ''}
             riskAnalysis: parsed.riskAnalysis || text,
             locationAnalysis: parsed.locationAnalysis || text,
             overallOpinion: parsed.overallOpinion || text,
-            investmentRating: parsed.investmentRating || '★★★★★ (5/5)',
+            investmentRating: parsed.investmentRating || expectedRating,
           };
         }
       } catch (e) {
@@ -125,7 +137,7 @@ ${item.area ? `- 면적: ${item.area}m²` : ''}
         riskAnalysis: text,
         locationAnalysis: text,
         overallOpinion: text,
-        investmentRating: '★★★★★ (5/5)',
+        investmentRating: expectedRating,
       };
     } catch (error) {
       console.error('Gemini API 호출 실패:', error);
